@@ -13,6 +13,7 @@ import { LifestyleStep } from "./lifestyle-step"
 import { MakeupSpfStep } from "./makeup-spf-step"
 import { ProductChangesStep } from "./product-changes-step"
 import { SkinReactionStep } from "./skin-reaction-step"
+import { PhotoUploadStep } from "./photo-upload-step"
 import { QuizResultsStep } from "./quiz-results-step"
 import { Progress } from "@/components/ui/progress"
 
@@ -27,6 +28,7 @@ export type OnboardingData = {
   makeupSpfUsage: string
   productChanges: string
   skinReaction: string
+  photoUrl?: string
   concerns: string[]
   allergies: string
   budget: string
@@ -48,6 +50,7 @@ export function OnboardingFlow() {
     makeupSpfUsage: "",
     productChanges: "",
     skinReaction: "",
+    photoUrl: "",
     concerns: [],
     allergies: "",
     budget: "",
@@ -73,7 +76,7 @@ export function OnboardingFlow() {
   }
 
   // Total steps excluding welcome screen
-  const totalSteps = 11
+  const totalSteps = 12
   // Progress bar should only show after welcome screen, so we use step - 1
   const progress = step > 0 ? ((step - 1) / totalSteps) * 100 : 0
 
@@ -119,6 +122,7 @@ export function OnboardingFlow() {
       onBack={handleBack}
     />,
     <SkinReactionStep key="skin-reaction" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
+    <PhotoUploadStep key="photo-upload" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
     <QuizResultsStep key="quiz-results" data={data} onComplete={handleComplete} onBack={handleBack} />,
   ]
 
