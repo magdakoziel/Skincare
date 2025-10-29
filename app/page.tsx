@@ -22,7 +22,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <div className="mx-auto max-w-3xl space-y-6">
+        <div className="mx-auto max-w-3xl space-y-8">
           <h1 className="text-balance text-5xl font-bold tracking-tight text-foreground sm:text-6xl">
             Your Personal Skin Journey Starts Here
           </h1>
@@ -30,15 +30,58 @@ export default function LandingPage() {
             Track your acne progress with AI-powered analysis, get personalized skincare routines, and discover products
             that work for your unique skin.
           </p>
-          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Link href="/onboarding">
-              <Button size="lg" className="w-full sm:w-auto">
-                Start Your Journey
-              </Button>
-            </Link>
+
+          {/* Two Path Options */}
+          <div className="mx-auto max-w-2xl space-y-4">
+            <p className="text-sm font-medium text-muted-foreground">Choose how to get started:</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Quiz Path */}
+              <Link href="/onboarding" className="group">
+                <div className="flex h-full flex-col gap-4 rounded-lg border-2 border-border bg-card p-6 text-left transition-all hover:border-primary hover:shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/20">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-card-foreground">Take the Quiz</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Answer 10 quick questions to identify your acne type and get personalized recommendations
+                  </p>
+                  <div className="mt-auto">
+                    <Button className="w-full" size="lg">
+                      Start Quiz
+                    </Button>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Chat Path */}
+              <Link href="/chat" className="group">
+                <div className="flex h-full flex-col gap-4 rounded-lg border-2 border-border bg-card p-6 text-left transition-all hover:border-primary hover:shadow-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 group-hover:bg-primary/20">
+                      <MessageCircle className="h-5 w-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-card-foreground">Chat with AI</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Not sure about your skin type? Talk to our AI assistant to learn more about your skin first
+                  </p>
+                  <div className="mt-auto">
+                    <Button variant="secondary" className="w-full" size="lg">
+                      Start Chat
+                    </Button>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Dashboard Link */}
+          <div>
             <Link href="/dashboard">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent">
-                View Dashboard
+              <Button size="lg" variant="ghost" className="text-muted-foreground hover:text-foreground">
+                Or skip to Dashboard →
               </Button>
             </Link>
           </div>
