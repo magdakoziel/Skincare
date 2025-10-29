@@ -14,10 +14,6 @@ import { MakeupSpfStep } from "./makeup-spf-step"
 import { ProductChangesStep } from "./product-changes-step"
 import { SkinReactionStep } from "./skin-reaction-step"
 import { QuizResultsStep } from "./quiz-results-step"
-import { ConcernsStep } from "./concerns-step"
-import { AllergiesStep } from "./allergies-step"
-import { BudgetStep } from "./budget-step"
-import { AdditionalInfoStep } from "./additional-info-step"
 import { Progress } from "@/components/ui/progress"
 
 export type OnboardingData = {
@@ -77,7 +73,7 @@ export function OnboardingFlow() {
   }
 
   // Total steps excluding welcome screen
-  const totalSteps = 15
+  const totalSteps = 11
   // Progress bar should only show after welcome screen, so we use step - 1
   const progress = step > 0 ? ((step - 1) / totalSteps) * 100 : 0
 
@@ -123,17 +119,7 @@ export function OnboardingFlow() {
       onBack={handleBack}
     />,
     <SkinReactionStep key="skin-reaction" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
-    <QuizResultsStep key="quiz-results" data={data} onComplete={handleNext} onBack={handleBack} />,
-    <ConcernsStep key="concerns" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
-    <AllergiesStep key="allergies" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
-    <BudgetStep key="budget" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
-    <AdditionalInfoStep
-      key="additional"
-      data={data}
-      setData={setData}
-      onComplete={handleComplete}
-      onBack={handleBack}
-    />,
+    <QuizResultsStep key="quiz-results" data={data} onComplete={handleComplete} onBack={handleBack} />,
   ]
 
   return (
