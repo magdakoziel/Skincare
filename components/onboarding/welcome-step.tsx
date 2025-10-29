@@ -27,15 +27,15 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span>5 quick questions about your skin type and concerns</span>
+              <span>10 detailed questions about your skin type, breakouts, and lifestyle</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span>Personalized skincare routine recommendations</span>
+              <span>Personalized analysis of your acne type and likely causes</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
-              <span>Product suggestions tailored to your needs</span>
+              <span>Product and lifestyle recommendations tailored to your needs</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary">•</span>
