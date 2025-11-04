@@ -1,0 +1,430 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { ChevronLeft, ChevronRight, Plus, X, AlertCircle, UtensilsCrossed, Flame, Droplets, ShoppingBag, Activity } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+
+type JournalEntry = {
+  id: string
+  date: string
+  breakoutSeverity?: "none" | "mild" | "moderate" | "severe"
+  events: {
+    newProduct?: string
+    period?: boolean
+    stress?: boolean
+    dietChange?: string
+    sleep?: "poor" | "fair" | "good"
+    exercise?: boolean
+  }
+  notes?: string
+}
+
+export function SkinJournalCalendar() {
+  const [entries, setEntries] = useState<JournalEntry[]>([])
+  const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [isAddingEntry, setIsAddingEntry] = useState(false)
+
+  const [newEntry, setNewEntry] = useState({
+    date: new Date().toISOString().split('T')[0],
+    breakoutSeverity: "none" as "none" | "mild" | "moderate" | "severe",
+    events: {
+      newProduct: "",
+      period: false,
+      stress: false,
+      dietChange: "",
+      sleep: "good" as "poor" | "fair" | "good",
+      exercise: false,
+    },
+    notes: ""
+  })
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth()
+    const firstDay = new Date(year, month, 1)
+    const lastDay = new Date(year, month + 1, 0)
+    const daysInMonth = lastDay.getDate()
+    const startingDayOfWeek = firstDay.getDay()
+
+    return { daysInMonth, startingDayOfWeek, year, month }
+  }
+
+  const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentDate)
+
+  const previousMonth = () => {
+    setCurrentDate(new Date(year, month - 1, 1))
+  }
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(year, month + 1, 1))
+  }
+
+  const getEntryForDate = (dateStr: string) => {
+    return entries.find(e => e.date === dateStr)
+  }
+
+  const openEntryForm = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    setSelectedDate(dateStr)
+
+    const existingEntry = getEntryForDate(dateStr)
+    if (existingEntry) {
+      setNewEntry({
+        date: dateStr,
+        breakoutSeverity: existingEntry.breakoutSeverity || "none",
+        events: { ...existingEntry.events },
+        notes: existingEntry.notes || ""
+      })
+    } else {
+      setNewEntry({
+        date: dateStr,
+        breakoutSeverity: "none",
+        events: {
+          newProduct: "",
+          period: false,
+          stress: false,
+          dietChange: "",
+          sleep: "good",
+          exercise: false,
+        },
+        notes: ""
+      })
+    }
+    setIsAddingEntry(true)
+  }
+
+  const saveEntry = () => {
+    const existingIndex = entries.findIndex(e => e.date === newEntry.date)
+
+    const entry: JournalEntry = {
+      id: existingIndex >= 0 ? entries[existingIndex].id : Date.now().toString(),
+      date: newEntry.date,
+      breakoutSeverity: newEntry.breakoutSeverity,
+      events: { ...newEntry.events },
+      notes: newEntry.notes
+    }
+
+    if (existingIndex >= 0) {
+      const updated = [...entries]
+      updated[existingIndex] = entry
+      setEntries(updated)
+    } else {
+      setEntries([...entries, entry])
+    }
+
+    setIsAddingEntry(false)
+    setSelectedDate(null)
+  }
+
+  const deleteEntry = (id: string) => {
+    setEntries(entries.filter(e => e.id !== id))
+  }
+
+  const getSeverityColor = (severity?: string) => {
+    switch (severity) {
+      case "severe": return "bg-destructive"
+      case "moderate": return "bg-orange-500"
+      case "mild": return "bg-yellow-500"
+      case "none": return "bg-green-500"
+      default: return "bg-muted"
+    }
+  }
+
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"]
+
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Skin Journal</CardTitle>
+            <CardDescription>Track daily events and skin observations</CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Calendar Navigation */}
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="sm" onClick={previousMonth}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h3 className="text-lg font-semibold">
+            {monthNames[month]} {year}
+          </h3>
+          <Button variant="outline" size="sm" onClick={nextMonth}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="rounded-lg border border-border overflow-hidden">
+          {/* Day Names Header */}
+          <div className="grid grid-cols-7 bg-muted/50">
+            {dayNames.map((day) => (
+              <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Days */}
+          <div className="grid grid-cols-7">
+            {/* Empty cells for days before month starts */}
+            {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+              <div key={`empty-${i}`} className="aspect-square border-b border-r border-border bg-muted/20" />
+            ))}
+
+            {/* Actual days */}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1
+              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+              const entry = getEntryForDate(dateStr)
+              const isToday = dateStr === new Date().toISOString().split('T')[0]
+
+              return (
+                <div
+                  key={day}
+                  className={`relative aspect-square border-b border-r border-border p-1 hover:bg-muted/50 transition-colors ${
+                    isToday ? 'bg-primary/5' : ''
+                  }`}>
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-start justify-between">
+                      <span className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-foreground'}`}>
+                        {day}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEntryForm(day)}
+                        className="h-5 w-5 p-0 hover:bg-primary/20">
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {entry && (
+                      <div className="flex-1 flex flex-col gap-0.5 mt-1">
+                        <div className={`h-1.5 w-full rounded-full ${getSeverityColor(entry.breakoutSeverity)}`} />
+                        <div className="flex flex-wrap gap-0.5">
+                          {entry.events.period && <div className="h-1 w-1 rounded-full bg-pink-500" />}
+                          {entry.events.stress && <div className="h-1 w-1 rounded-full bg-red-500" />}
+                          {entry.events.newProduct && <div className="h-1 w-1 rounded-full bg-blue-500" />}
+                          {entry.events.dietChange && <div className="h-1 w-1 rounded-full bg-orange-500" />}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Entry Form Modal */}
+        {isAddingEntry && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-lg border border-border shadow-lg">
+              <div className="sticky top-0 bg-card border-b border-border p-4 flex items-center justify-between">
+                <h3 className="text-lg font-semibold">
+                  Journal Entry - {new Date(selectedDate!).toLocaleDateString('en-US', {
+                    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+                  })}
+                </h3>
+                <Button variant="ghost" size="sm" onClick={() => setIsAddingEntry(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="p-4 space-y-4">
+                <div className="space-y-2">
+                  <Label>Breakout Severity</Label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {(["none", "mild", "moderate", "severe"] as const).map((severity) => (
+                      <Button
+                        key={severity}
+                        variant={newEntry.breakoutSeverity === severity ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setNewEntry({ ...newEntry, breakoutSeverity: severity })}>
+                        {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Events & Triggers</Label>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="modal-period"
+                      checked={newEntry.events.period}
+                      onCheckedChange={(checked) =>
+                        setNewEntry({ ...newEntry, events: { ...newEntry.events, period: checked as boolean }})
+                      }
+                    />
+                    <label htmlFor="modal-period" className="text-sm font-medium cursor-pointer">
+                      Period/Menstruation
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="modal-stress"
+                      checked={newEntry.events.stress}
+                      onCheckedChange={(checked) =>
+                        setNewEntry({ ...newEntry, events: { ...newEntry.events, stress: checked as boolean }})
+                      }
+                    />
+                    <label htmlFor="modal-stress" className="text-sm font-medium cursor-pointer">
+                      High Stress
+                    </label>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="modal-exercise"
+                      checked={newEntry.events.exercise}
+                      onCheckedChange={(checked) =>
+                        setNewEntry({ ...newEntry, events: { ...newEntry.events, exercise: checked as boolean }})
+                      }
+                    />
+                    <label htmlFor="modal-exercise" className="text-sm font-medium cursor-pointer">
+                      Exercise/Workout
+                    </label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-new-product">New Product</Label>
+                    <Input
+                      id="modal-new-product"
+                      placeholder="e.g., Started retinol"
+                      value={newEntry.events.newProduct}
+                      onChange={(e) => setNewEntry({ ...newEntry, events: { ...newEntry.events, newProduct: e.target.value }})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="modal-diet">Diet Change</Label>
+                    <Input
+                      id="modal-diet"
+                      placeholder="e.g., Ate dairy"
+                      value={newEntry.events.dietChange}
+                      onChange={(e) => setNewEntry({ ...newEntry, events: { ...newEntry.events, dietChange: e.target.value }})}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Sleep Quality</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(["poor", "fair", "good"] as const).map((quality) => (
+                        <Button
+                          key={quality}
+                          variant={newEntry.events.sleep === quality ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setNewEntry({ ...newEntry, events: { ...newEntry.events, sleep: quality }})}>
+                          {quality.charAt(0).toUpperCase() + quality.slice(1)}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="modal-notes">Notes</Label>
+                  <Textarea
+                    id="modal-notes"
+                    placeholder="Any other observations..."
+                    value={newEntry.notes}
+                    onChange={(e) => setNewEntry({ ...newEntry, notes: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={saveEntry} className="flex-1">
+                    Save Entry
+                  </Button>
+                  {getEntryForDate(newEntry.date) && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        const entry = getEntryForDate(newEntry.date)
+                        if (entry) deleteEntry(entry.id)
+                        setIsAddingEntry(false)
+                      }}>
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+          <p className="text-xs font-semibold">Legend:</p>
+          <div className="flex flex-wrap gap-3 text-xs">
+            <div className="flex items-center gap-1">
+              <div className="h-3 w-6 rounded bg-green-500" />
+              <span className="text-muted-foreground">Clear</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-3 w-6 rounded bg-yellow-500" />
+              <span className="text-muted-foreground">Mild</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-3 w-6 rounded bg-orange-500" />
+              <span className="text-muted-foreground">Moderate</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-3 w-6 rounded bg-destructive" />
+              <span className="text-muted-foreground">Severe</span>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3 text-xs pt-1">
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-pink-500" />
+              <span className="text-muted-foreground">Period</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-red-500" />
+              <span className="text-muted-foreground">Stress</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
+              <span className="text-muted-foreground">New Product</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-orange-500" />
+              <span className="text-muted-foreground">Diet</span>
+            </div>
+          </div>
+        </div>
+
+        {entries.length > 0 && (
+          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-foreground">AI Pattern Analysis</p>
+                <p className="text-sm text-muted-foreground">
+                  {entries.length} entries logged. Keep tracking to discover patterns!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

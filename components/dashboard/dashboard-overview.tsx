@@ -1,11 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Camera, Sparkles, TrendingUp, ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { CollapsibleRoutine } from "./collapsible-routine"
+import { SkinJournalCalendar } from "./skin-journal-calendar"
+import { ProductLibrary, SavedProduct } from "./product-library"
 
 export function DashboardOverview() {
+  const [productLibrary, setProductLibrary] = useState<SavedProduct[]>([])
+
   // Mock data for now since Convex is not set up
   const stats = {
     totalPhotos: 12,
@@ -26,6 +32,31 @@ export function DashboardOverview() {
       analysis: { severity: "moderate", type: "comedonal" },
     },
   ]
+
+  const addProductToLibrary = (product: Omit<SavedProduct, 'id' | 'dateAdded'>) => {
+    const newProduct: SavedProduct = {
+      ...product,
+      id: Date.now().toString(),
+      dateAdded: new Date().toISOString()
+    }
+    setProductLibrary([...productLibrary, newProduct])
+  }
+
+  const removeProductFromLibrary = (id: string) => {
+    setProductLibrary(productLibrary.filter(p => p.id !== id))
+  }
+
+  const toggleFavorite = (id: string) => {
+    setProductLibrary(productLibrary.map(p =>
+      p.id === id ? { ...p, favorite: !p.favorite } : p
+    ))
+  }
+
+  const toggleInUse = (id: string) => {
+    setProductLibrary(productLibrary.map(p =>
+      p.id === id ? { ...p, inUse: !p.inUse } : p
+    ))
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -120,6 +151,23 @@ export function DashboardOverview() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Product Library - Full Width */}
+      <div className="mt-6">
+        <ProductLibrary
+          products={productLibrary}
+          onAddProduct={addProductToLibrary}
+          onRemoveProduct={removeProductFromLibrary}
+          onToggleFavorite={toggleFavorite}
+          onToggleInUse={toggleInUse}
+        />
+      </div>
+
+      {/* Skin Journal & Routine - Side by Side */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <SkinJournalCalendar />
+        <CollapsibleRoutine library={productLibrary} />
       </div>
     </div>
   )
