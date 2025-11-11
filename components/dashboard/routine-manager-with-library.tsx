@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { getRoutines, saveRoutines } from "@/lib/routine-storage"
 
 type Product = {
   id: string
@@ -31,9 +32,10 @@ type Product = {
 
 type RoutineManagerProps = {
   library: SavedProduct[]
+  onProductAdd?: (product: Omit<SavedProduct, 'id' | 'dateAdded'>) => void
 }
 
-export function RoutineManagerWithLibrary({ library }: RoutineManagerProps) {
+export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineManagerProps) {
   const [morningRoutine, setMorningRoutine] = useState<Product[]>([])
   const [eveningRoutine, setEveningRoutine] = useState<Product[]>([])
   const [activeTab, setActiveTab] = useState<"morning" | "evening">("morning")
@@ -46,6 +48,21 @@ export function RoutineManagerWithLibrary({ library }: RoutineManagerProps) {
     step: "cleanser",
     notes: ""
   })
+
+  // Load routines from localStorage on mount
+  useEffect(() => {
+    const routines = getRoutines()
+    setMorningRoutine(routines.morning)
+    setEveningRoutine(routines.evening)
+  }, [])
+
+  // Save routines whenever they change
+  useEffect(() => {
+    saveRoutines({
+      morning: morningRoutine,
+      evening: eveningRoutine
+    })
+  }, [morningRoutine, eveningRoutine])
 
   const steps = [
     { value: "cleanser", label: "Cleanser" },
@@ -87,10 +104,23 @@ export function RoutineManagerWithLibrary({ library }: RoutineManagerProps) {
       ...newProduct
     }
 
+    // Add to routine
     if (activeTab === "morning") {
       setMorningRoutine([...morningRoutine, product])
     } else {
       setEveningRoutine([...eveningRoutine, product])
+    }
+
+    // Also add to library if callback provided
+    if (onProductAdd) {
+      onProductAdd({
+        name: newProduct.name,
+        brand: newProduct.brand,
+        step: newProduct.step,
+        notes: newProduct.notes,
+        inUse: true,
+        favorite: false
+      })
     }
 
     setNewProduct({

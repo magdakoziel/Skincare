@@ -1,16 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Camera, Sparkles, TrendingUp, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { CollapsibleRoutine } from "./collapsible-routine"
 import { SkinJournalCalendar } from "./skin-journal-calendar"
-import { ProductLibrary, SavedProduct } from "./product-library"
+import { SavedProduct } from "./product-library"
+import { getProducts, saveProducts } from "@/lib/product-storage"
 
 export function DashboardOverview() {
   const [productLibrary, setProductLibrary] = useState<SavedProduct[]>([])
+
+  useEffect(() => {
+    setProductLibrary(getProducts())
+
+    // Listen for changes from other tabs/components
+    const handleStorageChange = () => {
+      setProductLibrary(getProducts())
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    // Custom event for same-tab updates
+    window.addEventListener('productsUpdated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('productsUpdated', handleStorageChange)
+    }
+  }, [])
+
+  const addProductToLibrary = (product: Omit<SavedProduct, 'id' | 'dateAdded'>) => {
+    const newProduct: SavedProduct = {
+      ...product,
+      id: Date.now().toString(),
+      dateAdded: new Date().toISOString()
+    }
+    const updated = [...productLibrary, newProduct]
+    setProductLibrary(updated)
+    saveProducts(updated)
+  }
 
   // Mock data for now since Convex is not set up
   const stats = {
@@ -33,31 +63,6 @@ export function DashboardOverview() {
     },
   ]
 
-  const addProductToLibrary = (product: Omit<SavedProduct, 'id' | 'dateAdded'>) => {
-    const newProduct: SavedProduct = {
-      ...product,
-      id: Date.now().toString(),
-      dateAdded: new Date().toISOString()
-    }
-    setProductLibrary([...productLibrary, newProduct])
-  }
-
-  const removeProductFromLibrary = (id: string) => {
-    setProductLibrary(productLibrary.filter(p => p.id !== id))
-  }
-
-  const toggleFavorite = (id: string) => {
-    setProductLibrary(productLibrary.map(p =>
-      p.id === id ? { ...p, favorite: !p.favorite } : p
-    ))
-  }
-
-  const toggleInUse = (id: string) => {
-    setProductLibrary(productLibrary.map(p =>
-      p.id === id ? { ...p, inUse: !p.inUse } : p
-    ))
-  }
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
@@ -66,18 +71,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Stats Grid */}
-      <div className="mb-8 grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Photos</CardTitle>
-            <Camera className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalPhotos}</div>
-            <p className="text-xs text-muted-foreground">Tracking your progress</p>
-          </CardContent>
-        </Card>
-
+      <div className="mb-8 grid gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Improvement</CardTitle>
@@ -94,8 +88,19 @@ export function DashboardOverview() {
         {/* Recent Photos */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Photos</CardTitle>
-            <CardDescription>Your latest skin progress photos</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Recent Photos</CardTitle>
+                <CardDescription>Your latest skin progress photos</CardDescription>
+              </div>
+              <div className="text-right">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Camera className="h-4 w-4" />
+                  <span className="text-2xl font-bold text-foreground">{stats.totalPhotos}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">total</p>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -153,21 +158,10 @@ export function DashboardOverview() {
         </Card>
       </div>
 
-      {/* Product Library - Full Width */}
-      <div className="mt-6">
-        <ProductLibrary
-          products={productLibrary}
-          onAddProduct={addProductToLibrary}
-          onRemoveProduct={removeProductFromLibrary}
-          onToggleFavorite={toggleFavorite}
-          onToggleInUse={toggleInUse}
-        />
-      </div>
-
       {/* Skin Journal & Routine - Side by Side */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <SkinJournalCalendar />
-        <CollapsibleRoutine library={productLibrary} />
+        <CollapsibleRoutine library={productLibrary} onProductAdd={addProductToLibrary} />
       </div>
     </div>
   )

@@ -8,10 +8,11 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar } from "lucide-react"
 
 type Photo = {
-  _id: string
+  _id?: string
   url: string
   caption?: string
-  createdAt: number
+  date?: string
+  createdAt?: number
   analysisResult?: {
     acneType: string
     severity: string
@@ -39,25 +40,29 @@ export function GridView({ photos }: GridViewProps) {
   return (
     <>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {photos.map((photo) => (
-          <Card
-            key={photo._id}
-            className="cursor-pointer overflow-hidden border-border transition-transform hover:scale-105"
-            onClick={() => setSelectedPhoto(photo)}
-          >
-            <img
-              src={photo.url || "/placeholder.svg"}
-              alt={photo.caption || "Skin photo"}
-              className="h-64 w-full object-cover"
-            />
-            <CardContent className="p-3">
-              <p className="text-sm font-medium text-muted-foreground">
-                {format(new Date(photo.createdAt), "MMM d, yyyy")}
-              </p>
-              {photo.caption && <p className="mt-1 text-sm text-foreground line-clamp-2">{photo.caption}</p>}
-            </CardContent>
-          </Card>
-        ))}
+        {photos.map((photo, index) => {
+          const photoDate = photo.date ? new Date(photo.date) : (photo.createdAt ? new Date(photo.createdAt) : new Date())
+
+          return (
+            <Card
+              key={photo._id || index}
+              className="cursor-pointer overflow-hidden border-border transition-transform hover:scale-105"
+              onClick={() => setSelectedPhoto(photo)}
+            >
+              <img
+                src={photo.url || "/placeholder.svg"}
+                alt={photo.caption || "Skin photo"}
+                className="h-64 w-full object-cover"
+              />
+              <CardContent className="p-3">
+                <p className="text-sm font-medium text-muted-foreground">
+                  {format(photoDate, "MMM d, yyyy")}
+                </p>
+                {photo.caption && <p className="mt-1 text-sm text-foreground line-clamp-2">{photo.caption}</p>}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       {selectedPhoto && (
@@ -70,7 +75,10 @@ export function GridView({ photos }: GridViewProps) {
             />
             <div className="space-y-3">
               <p className="text-sm font-medium text-muted-foreground">
-                {format(new Date(selectedPhoto.createdAt), "MMMM d, yyyy")}
+                {format(
+                  selectedPhoto.date ? new Date(selectedPhoto.date) : (selectedPhoto.createdAt ? new Date(selectedPhoto.createdAt) : new Date()),
+                  "MMMM d, yyyy"
+                )}
               </p>
               {selectedPhoto.caption && <p className="text-foreground">{selectedPhoto.caption}</p>}
               {selectedPhoto.analysisResult && (

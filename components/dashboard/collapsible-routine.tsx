@@ -9,9 +9,10 @@ import { SavedProduct } from "./product-library"
 
 type CollapsibleRoutineProps = {
   library: SavedProduct[]
+  onProductAdd?: (product: Omit<SavedProduct, 'id' | 'dateAdded'>) => void
 }
 
-export function CollapsibleRoutine({ library }: CollapsibleRoutineProps) {
+export function CollapsibleRoutine({ library, onProductAdd }: CollapsibleRoutineProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -29,7 +30,7 @@ export function CollapsibleRoutine({ library }: CollapsibleRoutineProps) {
       </CardHeader>
       {isOpen && (
         <CardContent>
-          <RoutineManagerWithLibrary library={library} />
+          <RoutineManagerWithLibrary library={library} onProductAdd={onProductAdd} />
         </CardContent>
       )}
     </Card>

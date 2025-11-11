@@ -34,6 +34,11 @@ export function PhotoGallery() {
     setShowUpload(false)
   }
 
+  const handlePhotoUpdate = (updatedPhotos: any[]) => {
+    localStorage.setItem("photos", JSON.stringify(updatedPhotos))
+    setPhotos(updatedPhotos)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -64,7 +69,7 @@ export function PhotoGallery() {
         </TabsList>
 
         <TabsContent value="timeline" className="space-y-4">
-          <TimelineView photos={photos} />
+          <TimelineView photos={photos} onPhotoUpdate={handlePhotoUpdate} />
         </TabsContent>
 
         <TabsContent value="grid" className="space-y-4">
