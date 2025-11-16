@@ -31,13 +31,22 @@ export default function GlossaryPage() {
   }, [selectedSkinType])
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground">Skincare Glossary</h1>
-        <p className="mt-2 text-base md:text-lg text-muted-foreground">
-          Learn about skin concerns and active ingredients to make informed skincare decisions
-        </p>
-      </div>
+    <div className="min-h-screen relative overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(1200px 800px at 10% -10%, hsl(320 60% 80% / 0.3), transparent 60%),
+          radial-gradient(1000px 700px at 110% 10%, hsl(280 70% 75% / 0.25), transparent 55%),
+          radial-gradient(900px 600px at 50% 120%, hsl(340 65% 85% / 0.2), transparent 60%),
+          hsl(var(--background))
+        `
+      }}>
+      <div className="container mx-auto px-4 py-6 md:py-8 pb-20 md:pb-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Skincare Glossary</h1>
+          <p className="mt-2 text-base md:text-lg text-muted-foreground">
+            Learn about skin concerns and active ingredients to make informed skincare decisions
+          </p>
+        </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -377,6 +386,7 @@ export default function GlossaryPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   )
 }

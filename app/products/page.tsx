@@ -58,21 +58,31 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8 pb-20 md:pb-8">
-      <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Product Library</h1>
-        <p className="mt-1 md:mt-2 text-sm md:text-base text-muted-foreground">
-          Track all your skincare products in one place
-        </p>
-      </div>
+    <div className="min-h-screen relative overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(1200px 800px at 10% -10%, hsl(320 60% 80% / 0.3), transparent 60%),
+          radial-gradient(1000px 700px at 110% 10%, hsl(280 70% 75% / 0.25), transparent 55%),
+          radial-gradient(900px 600px at 50% 120%, hsl(340 65% 85% / 0.2), transparent 60%),
+          hsl(var(--background))
+        `
+      }}>
+      <div className="container mx-auto px-4 py-4 md:py-8 pb-20 md:pb-8">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Product Library</h1>
+          <p className="mt-1 md:mt-2 text-sm md:text-base text-muted-foreground">
+            Track all your skincare products in one place
+          </p>
+        </div>
 
-      <ProductLibrary
-        products={productLibrary}
-        onAddProduct={addProductToLibrary}
-        onRemoveProduct={removeProductFromLibrary}
-        onToggleFavorite={toggleFavorite}
-        onToggleInUse={toggleInUse}
-      />
+        <ProductLibrary
+          products={productLibrary}
+          onAddProduct={addProductToLibrary}
+          onRemoveProduct={removeProductFromLibrary}
+          onToggleFavorite={toggleFavorite}
+          onToggleInUse={toggleInUse}
+        />
+      </div>
     </div>
   )
 }
