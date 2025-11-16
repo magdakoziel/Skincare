@@ -166,9 +166,9 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="container mx-auto flex h-[calc(100vh-7rem)] md:h-[calc(100vh-4rem)] max-w-4xl flex-col px-4 py-4 md:py-8">
-      <Card className="flex flex-1 flex-col border-border/40 bg-background/60 backdrop-blur-md shadow-xl">
-        <CardHeader className="border-b border-border/40 py-3 md:py-6 bg-gradient-to-r from-purple-50/60 via-pink-50/50 to-rose-50/60 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 backdrop-blur-sm">
+    <div className="container mx-auto flex max-w-4xl flex-col px-4 py-4 md:py-8">
+      <Card className="flex flex-col border-border/40 bg-background/60 backdrop-blur-md shadow-xl h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]">
+        <CardHeader className="flex-shrink-0 border-b border-border/40 py-3 md:py-6 bg-gradient-to-r from-purple-50/60 via-pink-50/50 to-rose-50/60 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 backdrop-blur-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 md:gap-3">
               <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-200 via-pink-200 to-rose-200 dark:from-purple-800 dark:via-pink-800 dark:to-rose-800 shadow-lg shadow-primary/20">
@@ -191,12 +191,12 @@ export function ChatInterface() {
           </div>
         </CardHeader>
 
-        <CardContent className="flex flex-1 flex-col overflow-hidden p-0">
-          <div className="flex-1 overflow-hidden">
+        <CardContent className="flex flex-1 flex-col overflow-hidden p-0 min-h-0">
+          <div className="flex-1 overflow-y-auto min-h-0">
             <div
               ref={messagesContainerRef}
               onScroll={handleScroll}
-              className="flex h-full flex-col gap-3 md:gap-4 overflow-y-auto p-3 md:p-4"
+              className="h-full flex flex-col gap-3 md:gap-4 p-3 md:p-4"
             >
               {chatError && (
                 <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
@@ -250,7 +250,7 @@ export function ChatInterface() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-border/40 p-3 md:p-4 bg-gradient-to-r from-purple-50/80 via-pink-50/60 to-rose-50/70 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 backdrop-blur-sm">
+          <div className="flex-shrink-0 border-t border-border/40 p-3 md:p-4 bg-gradient-to-r from-purple-50/80 via-pink-50/60 to-rose-50/70 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 backdrop-blur-sm">
             <div className="flex gap-2">
               <Input
                 placeholder="Ask about skincare..."
