@@ -149,7 +149,7 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="h-8 w-8 bg-background/80 backdrop-blur-sm md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm"
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
