@@ -5,7 +5,7 @@ export default function GlossaryLayout({ children }: { children: React.ReactNode
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      {children}
+      <div className="pb-24 md:pb-8">{children}</div>
     </div>
   )
 }
