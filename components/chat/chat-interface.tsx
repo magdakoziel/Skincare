@@ -106,28 +106,28 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="container mx-auto flex h-[calc(100vh-4rem)] max-w-4xl flex-col px-4 py-8">
+    <div className="container mx-auto flex h-[calc(100vh-7rem)] md:h-[calc(100vh-4rem)] max-w-4xl flex-col px-4 py-4 md:py-8">
       <Card className="flex flex-1 flex-col border-border">
-        <CardHeader className="border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <MessageCircle className="h-5 w-5 text-primary" />
+        <CardHeader className="border-b border-border py-3 md:py-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-full bg-primary/10">
+              <MessageCircle className="h-4 w-4 md:h-5 md:w-5 text-primary" />
             </div>
             <div>
-              <CardTitle>Skincare Assistant</CardTitle>
-              <p className="text-sm text-muted-foreground">Ask me anything about skincare</p>
+              <CardTitle className="text-base md:text-lg">Skincare Assistant</CardTitle>
+              <p className="text-xs md:text-sm text-muted-foreground">Ask me anything about skincare</p>
             </div>
           </div>
         </CardHeader>
 
         <CardContent className="flex flex-1 flex-col gap-4 overflow-hidden p-0">
           {/* Messages Area */}
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex-1 space-y-3 md:space-y-4 overflow-y-auto p-3 md:p-4">
             {messages.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center text-center">
-                <MessageCircle className="mb-4 h-12 w-12 text-muted-foreground" />
-                <h3 className="mb-2 text-lg font-semibold text-foreground">Start a conversation</h3>
-                <p className="mb-6 text-sm text-muted-foreground">
+              <div className="flex h-full flex-col items-center justify-center text-center px-4">
+                <MessageCircle className="mb-3 md:mb-4 h-10 w-10 md:h-12 md:w-12 text-muted-foreground" />
+                <h3 className="mb-2 text-base md:text-lg font-semibold text-foreground">Start a conversation</h3>
+                <p className="mb-4 md:mb-6 text-xs md:text-sm text-muted-foreground">
                   Ask me about skincare routines, products, or any skin concerns
                 </p>
                 <SuggestedQuestions onSelect={handleSend} />
@@ -153,7 +153,7 @@ export function ChatInterface() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-3 md:p-4">
             <div className="flex gap-2">
               <Input
                 placeholder="Ask about skincare..."

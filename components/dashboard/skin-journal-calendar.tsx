@@ -51,7 +51,8 @@ export function SkinJournalCalendar() {
     const firstDay = new Date(year, month, 1)
     const lastDay = new Date(year, month + 1, 0)
     const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+    // Convert Sunday (0) to 6, and shift other days back by 1 (Monday becomes 0)
+    const startingDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1
 
     return { daysInMonth, startingDayOfWeek, year, month }
   }
@@ -140,10 +141,10 @@ export function SkinJournalCalendar() {
   const monthNames = ["January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"]
 
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
   return (
-    <Card>
+    <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -192,38 +193,50 @@ export function SkinJournalCalendar() {
               const isToday = dateStr === new Date().toISOString().split('T')[0]
 
               return (
-                <div
+                <button
                   key={day}
-                  className={`relative aspect-square border-b border-r border-border p-1 hover:bg-muted/50 transition-colors ${
+                  onClick={() => openEntryForm(day)}
+                  className={`group relative aspect-square border-b border-r border-border p-2 hover:bg-muted/50 transition-colors cursor-pointer ${
                     isToday ? 'bg-primary/5' : ''
                   }`}>
                   <div className="flex flex-col h-full">
-                    <div className="flex items-start justify-between">
-                      <span className={`text-sm font-medium ${isToday ? 'text-primary' : 'text-foreground'}`}>
-                        {day}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openEntryForm(day)}
-                        className="h-5 w-5 p-0 hover:bg-primary/20">
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
+                    {/* Day number */}
+                    <span className={`text-sm font-medium ${isToday ? 'text-primary font-semibold' : 'text-foreground'}`}>
+                      {day}
+                    </span>
 
-                    {entry && (
-                      <div className="flex-1 flex flex-col gap-0.5 mt-1">
-                        <div className={`h-1.5 w-full rounded-full ${getSeverityColor(entry.breakoutSeverity)}`} />
-                        <div className="flex flex-wrap gap-0.5">
-                          {entry.events.period && <div className="h-1 w-1 rounded-full bg-pink-500" />}
-                          {entry.events.stress && <div className="h-1 w-1 rounded-full bg-red-500" />}
-                          {entry.events.newProduct && <div className="h-1 w-1 rounded-full bg-blue-500" />}
-                          {entry.events.dietChange && <div className="h-1 w-1 rounded-full bg-orange-500" />}
+                    {/* Entry indicators or hover plus */}
+                    {entry ? (
+                      <div className="flex-1 flex flex-col gap-1 mt-2">
+                        {/* Severity bar */}
+                        <div className={`h-2 w-full rounded-sm ${getSeverityColor(entry.breakoutSeverity)}`} />
+
+                        {/* Event dots */}
+                        <div className="flex flex-wrap gap-1">
+                          {entry.events.period && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-pink-500" title="Period" />
+                          )}
+                          {entry.events.stress && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" title="Stress" />
+                          )}
+                          {entry.events.newProduct && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" title="New Product" />
+                          )}
+                          {entry.events.dietChange && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-orange-500" title="Diet Change" />
+                          )}
+                          {entry.events.exercise && (
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" title="Exercise" />
+                          )}
                         </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Plus className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
@@ -407,6 +420,10 @@ export function SkinJournalCalendar() {
             <div className="flex items-center gap-1">
               <div className="h-2 w-2 rounded-full bg-orange-500" />
               <span className="text-muted-foreground">Diet</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="text-muted-foreground">Exercise</span>
             </div>
           </div>
         </div>

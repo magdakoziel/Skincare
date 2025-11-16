@@ -58,10 +58,10 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground">Product Library</h1>
-        <p className="mt-2 text-muted-foreground">
+    <div className="container mx-auto px-4 py-4 md:py-8 pb-20 md:pb-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Product Library</h1>
+        <p className="mt-1 md:mt-2 text-sm md:text-base text-muted-foreground">
           Track all your skincare products in one place
         </p>
       </div>

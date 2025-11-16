@@ -16,7 +16,7 @@ export function CollapsibleRoutine({ library, onProductAdd }: CollapsibleRoutine
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <Card>
+    <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
       <CardHeader className="cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
         <div className="flex items-center justify-between">
           <div>

@@ -40,31 +40,30 @@ export function PhotoGallery() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="container mx-auto px-4 py-4 md:py-8 pb-20 md:pb-8">
+      <div className="mb-6 md:mb-8 flex flex-col gap-3 md:gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Photo Gallery</h1>
-          <p className="mt-1 text-muted-foreground">Track your skin journey over time</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Photo Gallery</h1>
+          <p className="mt-1 text-sm md:text-base text-muted-foreground">Track your skin journey over time</p>
         </div>
-        <Button onClick={() => setShowUpload(true)} className="w-full sm:w-auto">
+        <Button onClick={() => setShowUpload(true)} className="w-full sm:w-auto" size="sm">
           <Upload className="mr-2 h-4 w-4" />
           Upload Photo
         </Button>
       </div>
 
-      <Tabs value={view} onValueChange={(v: string) => setView(v as typeof view)} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
-          <TabsTrigger value="timeline" className="gap-2">
+      <Tabs value={view} onValueChange={(v: string) => setView(v as typeof view)} className="space-y-4 md:space-y-6">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto h-11">
+          <TabsTrigger value="timeline" className="gap-1.5 text-xs md:text-sm">
             <Clock className="h-4 w-4" />
             <span className="hidden sm:inline">Timeline</span>
           </TabsTrigger>
-          <TabsTrigger value="grid" className="gap-2">
+          <TabsTrigger value="grid" className="gap-1.5 text-xs md:text-sm">
             <Grid3x3 className="h-4 w-4" />
             <span className="hidden sm:inline">Grid</span>
           </TabsTrigger>
-          <TabsTrigger value="comparison" className="gap-2">
-            <span className="hidden sm:inline">Compare</span>
-            <span className="sm:hidden">Compare</span>
+          <TabsTrigger value="comparison" className="gap-1.5 text-xs md:text-sm">
+            <span>Compare</span>
           </TabsTrigger>
         </TabsList>
 
