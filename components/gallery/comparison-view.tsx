@@ -165,7 +165,7 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
           {/* Side-by-side comparison */}
           <Card className="border-border">
             <CardContent className="p-4 md:p-6">
-              <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3 md:gap-6">
                 {/* Photo 1 */}
                 <div className="space-y-2 md:space-y-3">
                   <div className="text-center">
@@ -226,24 +226,30 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
           </Card>
 
           {/* Progress indicator */}
-          {firstPhoto.analysisResult && secondPhoto.analysisResult && (
-            <Card className="border-primary/20 bg-primary/5">
-              <CardContent className="p-4 md:p-6">
-                <div className="text-center space-y-3 md:space-y-4">
-                  <h3 className="text-base md:text-lg font-semibold">Progress Analysis</h3>
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/5">
+            <CardContent className="p-4 md:p-6">
+              <div className="text-center space-y-3 md:space-y-4">
+                <h3 className="text-base md:text-lg font-semibold">📊 Progress Analysis</h3>
 
-                  {/* Calculate improvement based on severity */}
-                  {(() => {
-                    const severityMap: Record<string, number> = {
-                      'severe': 100,
-                      'moderate': 60,
-                      'mild': 30,
-                      'clear': 0
-                    }
+                {/* Calculate improvement based on severity */}
+                {(() => {
+                  const severityMap: Record<string, number> = {
+                    'severe': 100,
+                    'moderate': 60,
+                    'mild': 30,
+                    'clear': 0
+                  }
 
-                    const firstSeverity = severityMap[firstPhoto.analysisResult.severity.toLowerCase()] || 50
-                    const secondSeverity = severityMap[secondPhoto.analysisResult.severity.toLowerCase()] || 50
-                    const improvement = firstSeverity > 0 ? Math.round(((firstSeverity - secondSeverity) / firstSeverity) * 100) : 0
+                  // Check if both have AI analysis
+                  const hasAIAnalysis = firstPhoto.analysisResult && secondPhoto.analysisResult
+
+                  const firstSeverity = hasAIAnalysis
+                    ? (severityMap[firstPhoto.analysisResult.severity.toLowerCase()] || 50)
+                    : 50
+                  const secondSeverity = hasAIAnalysis
+                    ? (severityMap[secondPhoto.analysisResult.severity.toLowerCase()] || 50)
+                    : 50
+                  const improvement = firstSeverity > 0 ? Math.round(((firstSeverity - secondSeverity) / firstSeverity) * 100) : 0
 
                     const daysDiff = Math.abs(
                       Math.floor(
@@ -253,59 +259,65 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
                       )
                     )
 
-                    return (
-                      <>
-                        <div className="flex items-center justify-center gap-4 md:gap-8">
-                          <div className="text-center">
-                            <p className="text-xs md:text-sm text-muted-foreground">Time Difference</p>
-                            <p className="text-2xl md:text-3xl font-bold text-foreground">{daysDiff}</p>
-                            <p className="text-xs md:text-sm text-muted-foreground">days</p>
-                          </div>
-
-                          <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-
-                          <div className="text-center">
-                            <p className="text-xs md:text-sm text-muted-foreground">Improvement</p>
-                            <p className={cn(
-                              "text-2xl md:text-3xl font-bold",
-                              improvement > 0 ? "text-green-600 dark:text-green-400" :
-                              improvement < 0 ? "text-red-600 dark:text-red-400" :
-                              "text-muted-foreground"
-                            )}>
-                              {improvement > 0 ? '+' : ''}{improvement}%
-                            </p>
-                            <p className="text-xs md:text-sm text-muted-foreground">
-                              {improvement > 0 ? 'Better' : improvement < 0 ? 'Worse' : 'No change'}
-                            </p>
-                          </div>
+                  return (
+                    <>
+                      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-8">
+                        <div className="text-center">
+                          <p className="text-xs md:text-sm text-muted-foreground">Time Difference</p>
+                          <p className="text-2xl md:text-3xl font-bold text-foreground">{daysDiff}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">days</p>
                         </div>
 
-                        {/* Progress bar */}
-                        {improvement !== 0 && (
-                          <div className="space-y-2">
-                            <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                              <div
-                                className={cn(
-                                  "h-full transition-all duration-500",
-                                  improvement > 0 ? "bg-green-500" : "bg-red-500"
-                                )}
-                                style={{ width: `${Math.abs(improvement)}%` }}
-                              />
-                            </div>
-                            <p className="text-xs text-center text-muted-foreground">
-                              {improvement > 0
-                                ? "Keep up the great work! Your skin is improving."
-                                : "Don't worry - skin healing takes time. Consider consulting a dermatologist."}
-                            </p>
+                        <ArrowRight className="h-6 w-6 md:h-8 md:w-8 text-primary rotate-90 sm:rotate-0" />
+
+                        <div className="text-center">
+                          <p className="text-xs md:text-sm text-muted-foreground">
+                            {hasAIAnalysis ? 'AI-Detected Progress' : 'Timeline Progress'}
+                          </p>
+                          <p className={cn(
+                            "text-2xl md:text-3xl font-bold",
+                            improvement > 0 ? "text-green-600 dark:text-green-400" :
+                            improvement < 0 ? "text-red-600 dark:text-red-400" :
+                            "text-muted-foreground"
+                          )}>
+                            {improvement > 0 ? '+' : ''}{improvement}%
+                          </p>
+                          <p className="text-xs md:text-sm text-muted-foreground">
+                            {improvement > 0 ? '✨ Better' : improvement < 0 ? '⚠️ Worse' : 'No change'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      {improvement !== 0 && (
+                        <div className="space-y-2">
+                          <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                "h-full transition-all duration-500",
+                                improvement > 0 ? "bg-gradient-to-r from-green-500 to-emerald-400" : "bg-gradient-to-r from-red-500 to-orange-400"
+                              )}
+                              style={{ width: `${Math.abs(improvement)}%` }}
+                            />
                           </div>
-                        )}
-                      </>
-                    )
-                  })()}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                          <p className="text-xs sm:text-sm text-center text-muted-foreground px-2">
+                            {improvement > 0
+                              ? "🎉 Keep up the great work! Your skin is improving."
+                              : "💪 Don't worry - skin healing takes time. Stay consistent with your routine!"}
+                          </p>
+                          {hasAIAnalysis && (
+                            <p className="text-xs text-center text-muted-foreground/80 italic">
+                              Based on AI severity analysis
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
     </div>
