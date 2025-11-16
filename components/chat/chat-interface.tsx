@@ -5,7 +5,7 @@ import { useState, useRef, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MessageCircle, Send, Loader2, History, ArrowDown } from "lucide-react"
+import { MessageCircle, Send, Loader2, History, ArrowDown, Plus, Trash2 } from "lucide-react"
 import { ChatMessage } from "./chat-message"
 import { SuggestedQuestions } from "./suggested-questions"
 import {
@@ -25,8 +25,17 @@ type Message = {
   timestamp: number
 }
 
+type Conversation = {
+  id: string
+  title: string
+  messages: Message[]
+  createdAt: number
+  updatedAt: number
+}
+
 export function ChatInterface() {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [skinProfile, setSkinProfile] = useState<any>(null)
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -36,17 +45,74 @@ export function ChatInterface() {
   const [autoScroll, setAutoScroll] = useState(true)
   const [historyOpen, setHistoryOpen] = useState(false)
 
+  const currentConversation = conversations.find(c => c.id === currentConversationId)
+  const messages = currentConversation?.messages || []
+
   useEffect(() => {
     const profile = localStorage.getItem("skinProfile")
     if (profile) {
       setSkinProfile(JSON.parse(profile))
     }
 
-    const savedMessages = localStorage.getItem("chatMessages")
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages))
+    // Load conversations from localStorage
+    const savedConversations = localStorage.getItem("chatConversations")
+    if (savedConversations) {
+      const convos = JSON.parse(savedConversations)
+      setConversations(convos)
+      if (convos.length > 0) {
+        setCurrentConversationId(convos[0].id)
+      }
+    } else {
+      // Create initial conversation
+      const initialConvo: Conversation = {
+        id: `conv-${Date.now()}`,
+        title: "New Chat",
+        messages: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      }
+      setConversations([initialConvo])
+      setCurrentConversationId(initialConvo.id)
+      localStorage.setItem("chatConversations", JSON.stringify([initialConvo]))
     }
   }, [])
+
+  const saveConversations = (convos: Conversation[]) => {
+    setConversations(convos)
+    localStorage.setItem("chatConversations", JSON.stringify(convos))
+  }
+
+  const createNewConversation = () => {
+    const newConvo: Conversation = {
+      id: `conv-${Date.now()}`,
+      title: "New Chat",
+      messages: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    }
+    const updatedConvos = [newConvo, ...conversations]
+    saveConversations(updatedConvos)
+    setCurrentConversationId(newConvo.id)
+    setHistoryOpen(false)
+  }
+
+  const deleteConversation = (id: string) => {
+    const updatedConvos = conversations.filter(c => c.id !== id)
+    saveConversations(updatedConvos)
+
+    if (currentConversationId === id) {
+      if (updatedConvos.length > 0) {
+        setCurrentConversationId(updatedConvos[0].id)
+      } else {
+        createNewConversation()
+      }
+    }
+  }
+
+  const switchConversation = (id: string) => {
+    setCurrentConversationId(id)
+    setHistoryOpen(false)
+  }
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({ behavior })
@@ -101,7 +167,7 @@ export function ChatInterface() {
 
   const handleSend = async (messageText?: string) => {
     const textToSend = messageText || input
-    if (!textToSend.trim() || isLoading) return
+    if (!textToSend.trim() || isLoading || !currentConversationId) return
 
     setIsLoading(true)
     setChatError(null)
@@ -115,8 +181,24 @@ export function ChatInterface() {
     }
 
     const newMessages = [...messages, userMessage]
-    setMessages(newMessages)
-    localStorage.setItem("chatMessages", JSON.stringify(newMessages))
+
+    // Update conversation with new message
+    const updatedConvos = conversations.map(c => {
+      if (c.id === currentConversationId) {
+        // Update title if it's the first message
+        const title = c.messages.length === 0
+          ? textToSend.slice(0, 30) + (textToSend.length > 30 ? '...' : '')
+          : c.title
+        return {
+          ...c,
+          title,
+          messages: newMessages,
+          updatedAt: Date.now()
+        }
+      }
+      return c
+    })
+    saveConversations(updatedConvos)
     setAutoScroll(true)
 
     let aiContent = ""
@@ -153,8 +235,19 @@ export function ChatInterface() {
     }
 
     const updatedMessages = [...newMessages, aiResponse]
-    setMessages(updatedMessages)
-    localStorage.setItem("chatMessages", JSON.stringify(updatedMessages))
+
+    // Update conversation with AI response
+    const finalConvos = conversations.map(c => {
+      if (c.id === currentConversationId) {
+        return {
+          ...c,
+          messages: updatedMessages,
+          updatedAt: Date.now()
+        }
+      }
+      return c
+    })
+    saveConversations(finalConvos)
     setIsLoading(false)
   }
 
@@ -274,26 +367,65 @@ export function ChatInterface() {
       <Drawer direction="right" open={historyOpen} onOpenChange={setHistoryOpen}>
         <DrawerContent className="sm:max-w-lg bg-background/95 backdrop-blur-md border-border/40">
           <DrawerHeader className="bg-gradient-to-r from-purple-50/60 via-pink-50/50 to-rose-50/60 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 border-b border-border/40">
-            <DrawerTitle>Historia rozmowy</DrawerTitle>
-            <DrawerDescription>Przewijaj, aby zobaczyć wcześniejsze pytania i odpowiedzi.</DrawerDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <DrawerTitle>Konwersacje</DrawerTitle>
+                <DrawerDescription>Zarządzaj swoimi czatami</DrawerDescription>
+              </div>
+              <Button
+                onClick={createNewConversation}
+                size="sm"
+                className="gap-1 bg-gradient-to-r from-purple-500 via-pink-500 to-rose-400 hover:shadow-lg hover:shadow-primary/30"
+              >
+                <Plus className="h-4 w-4" />
+                Nowy
+              </Button>
+            </div>
           </DrawerHeader>
           <ScrollArea className="h-[65vh] w-full px-4 pb-4">
-            {messages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Jeszcze nie masz zapisanych rozmów. Zacznij czat, a historia pojawi się tutaj.
+            {conversations.length === 0 ? (
+              <p className="text-sm text-muted-foreground pt-4">
+                Brak konwersacji. Kliknij "Nowy" aby rozpocząć.
               </p>
             ) : (
               <div className="space-y-3 pt-4">
-                {messages.map((message) => (
+                {conversations.map((conversation) => (
                   <div
-                    key={`history-${message._id}`}
-                    className="rounded-lg border border-border/60 bg-gradient-to-br from-purple-50/40 via-pink-50/30 to-rose-50/40 dark:from-purple-950/20 dark:via-pink-950/15 dark:to-rose-950/20 backdrop-blur-sm p-3 shadow-sm"
+                    key={conversation.id}
+                    className={`rounded-lg border p-3 cursor-pointer transition-all ${
+                      currentConversationId === conversation.id
+                        ? 'border-primary bg-gradient-to-br from-purple-50/60 via-pink-50/50 to-rose-50/60 dark:from-purple-950/40 dark:via-pink-950/30 dark:to-rose-950/40 shadow-md'
+                        : 'border-border/60 bg-background/40 hover:border-primary/50 hover:bg-gradient-to-br hover:from-purple-50/20 hover:via-pink-50/15 hover:to-rose-50/20'
+                    }`}
+                    onClick={() => switchConversation(conversation.id)}
                   >
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-medium">{message.role === "user" ? "Ty" : "Asystent"}</span>
-                      <span>{formatTimestamp(message.timestamp)}</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-medium text-foreground truncate">
+                          {conversation.title}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-xs text-muted-foreground">
+                            {conversation.messages.length} {conversation.messages.length === 1 ? 'wiadomość' : 'wiadomości'}
+                          </p>
+                          <span className="text-xs text-muted-foreground">•</span>
+                          <p className="text-xs text-muted-foreground">
+                            {formatTimestamp(conversation.updatedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteConversation(conversation.id)
+                        }}
+                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <p className="mt-2 text-sm text-foreground whitespace-pre-wrap">{message.content}</p>
                   </div>
                 ))}
               </div>
