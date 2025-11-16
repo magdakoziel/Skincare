@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, X, Sun, Moon, ChevronDown } from "lucide-react"
+import { Plus, X, Sun, Moon, ChevronDown, Scan } from "lucide-react"
 import { SavedProduct } from "./product-library"
+import { BarcodeScanner } from "@/components/barcode-scanner"
 import {
   Command,
   CommandEmpty,
@@ -41,6 +42,7 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
   const [activeTab, setActiveTab] = useState<"morning" | "evening">("morning")
   const [open, setOpen] = useState(false)
   const [useLibrary, setUseLibrary] = useState(true)
+  const [showScanner, setShowScanner] = useState(false)
 
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -94,6 +96,22 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
       setEveningRoutine([...eveningRoutine, product])
     }
     setOpen(false)
+  }
+
+  const handleBarcodeScanned = (barcode: string, productData: any) => {
+    if (productData) {
+      // Product found in database
+      setNewProduct({
+        name: productData.name,
+        brand: productData.brand,
+        step: newProduct.step,
+        notes: newProduct.notes,
+      })
+      setUseLibrary(false) // Switch to manual entry with pre-filled data
+    } else {
+      // Product not found, just switch to manual entry
+      setUseLibrary(false)
+    }
   }
 
   const addProduct = () => {
@@ -165,7 +183,7 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
       <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
         <h3 className="text-sm font-semibold">Add Product to Routine</h3>
 
-        {/* Toggle between library and manual */}
+        {/* Toggle between library, scan, and manual */}
         <div className="flex gap-2">
           <Button
             variant={useLibrary ? "default" : "outline"}
@@ -173,6 +191,14 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
             onClick={() => setUseLibrary(true)}
             className="flex-1">
             From Library
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowScanner(true)}
+            className="flex-1">
+            <Scan className="mr-1 h-3 w-3" />
+            Scan
           </Button>
           <Button
             variant={!useLibrary ? "default" : "outline"}
@@ -337,6 +363,13 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
           </div>
         )}
       </div>
+
+      {/* Barcode Scanner */}
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScanSuccess={handleBarcodeScanned}
+      />
     </div>
   )
 }

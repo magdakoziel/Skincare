@@ -30,6 +30,7 @@ export function SkinJournalCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [isAddingEntry, setIsAddingEntry] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const [newEntry, setNewEntry] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -57,6 +58,22 @@ export function SkinJournalCalendar() {
     return { daysInMonth, startingDayOfWeek, year, month }
   }
 
+  // Get current week days (for collapsed view)
+  const getCurrentWeekDays = () => {
+    const today = new Date()
+    const currentDay = today.getDay()
+    // Convert Sunday (0) to 6, and shift other days back by 1 (Monday becomes 0)
+    const currentDayOfWeek = currentDay === 0 ? 6 : currentDay - 1
+
+    const weekDays = []
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() - currentDayOfWeek + i)
+      weekDays.push(date)
+    }
+    return weekDays
+  }
+
   const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(currentDate)
 
   const previousMonth = () => {
@@ -71,8 +88,17 @@ export function SkinJournalCalendar() {
     return entries.find(e => e.date === dateStr)
   }
 
-  const openEntryForm = (day: number) => {
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const openEntryForm = (day: number, customDate?: Date) => {
+    let dateStr: string
+
+    if (customDate) {
+      // For week view - use the full date object
+      dateStr = customDate.toISOString().split('T')[0]
+    } else {
+      // For month view - construct from day number
+      dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    }
+
     setSelectedDate(dateStr)
 
     const existingEntry = getEntryForDate(dateStr)
@@ -142,107 +168,233 @@ export function SkinJournalCalendar() {
     "July", "August", "September", "October", "November", "December"]
 
   const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  const weekDays = getCurrentWeekDays()
+  const todayStr = new Date().toISOString().split('T')[0]
 
   return (
-    <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+    <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl overflow-hidden">
+      <div className="relative p-4 md:p-6"
+        style={{
+          background: `
+            linear-gradient(135deg,
+              hsl(var(--primary) / 0.08) 0%,
+              hsl(280 60% 70% / 0.12) 50%,
+              hsl(var(--primary) / 0.08) 100%
+            )
+          `
+        }}>
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <CardTitle>Skin Journal</CardTitle>
-            <CardDescription>Track daily events and skin observations</CardDescription>
+            <h3 className="text-lg font-semibold text-foreground">Skin Journal</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {monthNames[new Date().getMonth()]} {new Date().getFullYear()}
+            </p>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Calendar Navigation */}
-        <div className="flex items-center justify-between">
-          <Button variant="outline" size="sm" onClick={previousMonth}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h3 className="text-lg font-semibold">
-            {monthNames[month]} {year}
-          </h3>
-          <Button variant="outline" size="sm" onClick={nextMonth}>
-            <ChevronRight className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="text-xs"
+          >
+            {isExpanded ? 'Collapse' : 'Expand'}
           </Button>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="rounded-lg border border-border overflow-hidden">
-          {/* Day Names Header */}
-          <div className="grid grid-cols-7 bg-muted/50">
-            {dayNames.map((day) => (
-              <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {/* Empty cells for days before month starts */}
-            {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-              <div key={`empty-${i}`} className="aspect-square border-b border-r border-border bg-muted/20" />
-            ))}
-
-            {/* Actual days */}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1
-              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+        {!isExpanded ? (
+          /* Week View (Collapsed) - Compact circles */
+          <div className="flex justify-center gap-2 md:gap-3">
+            {weekDays.map((date, idx) => {
+              const dateStr = date.toISOString().split('T')[0]
               const entry = getEntryForDate(dateStr)
-              const isToday = dateStr === new Date().toISOString().split('T')[0]
+              const isToday = dateStr === todayStr
+              const day = date.getDate()
 
               return (
                 <button
-                  key={day}
-                  onClick={() => openEntryForm(day)}
-                  className={`group relative aspect-square border-b border-r border-border p-2 hover:bg-muted/50 transition-colors cursor-pointer ${
-                    isToday ? 'bg-primary/5' : ''
+                  key={idx}
+                  onClick={() => openEntryForm(day, date)}
+                  className={`group relative flex flex-col items-center gap-1 transition-all cursor-pointer hover:scale-110`}
+                >
+                  {/* Day name */}
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase">
+                    {dayNames[idx].slice(0, 1)}
+                  </span>
+
+                  {/* Circle with day number */}
+                  <div className={`relative w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all ${
+                    isToday
+                      ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 ring-2 ring-primary ring-offset-2 ring-offset-background'
+                      : entry
+                        ? 'bg-background border-2 border-primary/40 text-foreground'
+                        : 'bg-background/50 border border-border text-muted-foreground group-hover:border-primary/50'
                   }`}>
-                  <div className="flex flex-col h-full">
-                    {/* Day number */}
-                    <span className={`text-sm font-medium ${isToday ? 'text-primary font-semibold' : 'text-foreground'}`}>
+                    <span className="text-sm md:text-base font-bold">
                       {day}
                     </span>
 
-                    {/* Entry indicators or hover plus */}
-                    {entry ? (
-                      <div className="flex-1 flex flex-col gap-1 mt-2">
-                        {/* Severity bar */}
-                        <div className={`h-2 w-full rounded-sm ${getSeverityColor(entry.breakoutSeverity)}`} />
-
-                        {/* Event dots */}
-                        <div className="flex flex-wrap gap-1">
-                          {entry.events.period && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-pink-500" title="Period" />
-                          )}
-                          {entry.events.stress && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-red-500" title="Stress" />
-                          )}
-                          {entry.events.newProduct && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" title="New Product" />
-                          )}
-                          {entry.events.dietChange && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-orange-500" title="Diet Change" />
-                          )}
-                          {entry.events.exercise && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" title="Exercise" />
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Plus className="h-4 w-4 text-muted-foreground" />
-                      </div>
+                    {/* Severity indicator dot */}
+                    {entry && entry.breakoutSeverity && entry.breakoutSeverity !== 'none' && (
+                      <div className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${getSeverityColor(entry.breakoutSeverity)}`} />
                     )}
                   </div>
                 </button>
               )
             })}
           </div>
-        </div>
+        ) : (
+          /* Full Month View (Expanded) */
+          <div className="space-y-4">
+            {/* Calendar Navigation */}
+            <div className="flex items-center justify-between">
+              <Button variant="outline" size="sm" onClick={previousMonth}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <h3 className="text-lg font-semibold">
+                {monthNames[month]} {year}
+              </h3>
+              <Button variant="outline" size="sm" onClick={nextMonth}>
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
 
-        {/* Entry Form Modal */}
+            {/* Calendar Grid */}
+            <div className="rounded-lg border border-border overflow-hidden">
+              {/* Day Names Header */}
+              <div className="grid grid-cols-7 bg-muted/50">
+                {dayNames.map((day) => (
+                  <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7">
+                {/* Empty cells for days before month starts */}
+                {Array.from({ length: startingDayOfWeek }).map((_, i) => (
+                  <div key={`empty-${i}`} className="aspect-square border-b border-r border-border bg-muted/20" />
+                ))}
+
+                {/* Actual days */}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1
+                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                  const entry = getEntryForDate(dateStr)
+                  const isToday = dateStr === new Date().toISOString().split('T')[0]
+
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => openEntryForm(day)}
+                      className={`group relative aspect-square border-b border-r border-border p-2 hover:bg-muted/50 transition-colors cursor-pointer ${
+                        isToday ? 'bg-primary/5' : ''
+                      }`}>
+                      <div className="flex flex-col h-full">
+                        {/* Day number */}
+                        <span className={`text-sm font-medium ${isToday ? 'text-primary font-semibold' : 'text-foreground'}`}>
+                          {day}
+                        </span>
+
+                        {/* Entry indicators or hover plus */}
+                        {entry ? (
+                          <div className="flex-1 flex flex-col gap-1 mt-2">
+                            {/* Severity bar */}
+                            <div className={`h-2 w-full rounded-sm ${getSeverityColor(entry.breakoutSeverity)}`} />
+
+                            {/* Event dots */}
+                            <div className="flex flex-wrap gap-1">
+                              {entry.events.period && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-pink-500" title="Period" />
+                              )}
+                              {entry.events.stress && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-red-500" title="Stress" />
+                              )}
+                              {entry.events.newProduct && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" title="New Product" />
+                              )}
+                              {entry.events.dietChange && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-orange-500" title="Diet Change" />
+                              )}
+                              {entry.events.exercise && (
+                                <div className="h-1.5 w-1.5 rounded-full bg-green-500" title="Exercise" />
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Legend - Only in expanded view */}
+            <div className="mt-4 space-y-2 rounded-lg border border-border bg-muted/30 p-3">
+              <p className="text-xs font-semibold">Legend:</p>
+              <div className="flex flex-wrap gap-3 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-6 rounded bg-green-500" />
+                  <span className="text-muted-foreground">Clear</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-6 rounded bg-yellow-500" />
+                  <span className="text-muted-foreground">Mild</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-6 rounded bg-orange-500" />
+                  <span className="text-muted-foreground">Moderate</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-6 rounded bg-destructive" />
+                  <span className="text-muted-foreground">Severe</span>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3 text-xs pt-1">
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-pink-500" />
+                  <span className="text-muted-foreground">Period</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="text-muted-foreground">Stress</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="text-muted-foreground">New Product</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-orange-500" />
+                  <span className="text-muted-foreground">Diet</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-green-500" />
+                  <span className="text-muted-foreground">Exercise</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {entries.length > 0 && !isExpanded && (
+          <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <div className="flex gap-2 items-start">
+              <AlertCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs font-semibold text-foreground">Pattern Analysis</p>
+                <p className="text-xs text-muted-foreground">
+                  {entries.length} entries • Keep tracking!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Entry Form Modal */}
         {isAddingEntry && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
             <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-card rounded-lg border border-border shadow-lg">
@@ -382,66 +534,6 @@ export function SkinJournalCalendar() {
             </div>
           </div>
         )}
-
-        {/* Legend */}
-        <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
-          <p className="text-xs font-semibold">Legend:</p>
-          <div className="flex flex-wrap gap-3 text-xs">
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-6 rounded bg-green-500" />
-              <span className="text-muted-foreground">Clear</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-6 rounded bg-yellow-500" />
-              <span className="text-muted-foreground">Mild</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-6 rounded bg-orange-500" />
-              <span className="text-muted-foreground">Moderate</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-3 w-6 rounded bg-destructive" />
-              <span className="text-muted-foreground">Severe</span>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-3 text-xs pt-1">
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-pink-500" />
-              <span className="text-muted-foreground">Period</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-red-500" />
-              <span className="text-muted-foreground">Stress</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-blue-500" />
-              <span className="text-muted-foreground">New Product</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-orange-500" />
-              <span className="text-muted-foreground">Diet</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="h-2 w-2 rounded-full bg-green-500" />
-              <span className="text-muted-foreground">Exercise</span>
-            </div>
-          </div>
-        </div>
-
-        {entries.length > 0 && (
-          <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
-            <div className="flex gap-3">
-              <AlertCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="text-sm font-semibold text-foreground">AI Pattern Analysis</p>
-                <p className="text-sm text-muted-foreground">
-                  {entries.length} entries logged. Keep tracking to discover patterns!
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-      </CardContent>
     </Card>
   )
 }

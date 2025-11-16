@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Camera, Sparkles, TrendingUp, ArrowRight } from "lucide-react"
+import { Camera, Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { CollapsibleRoutine } from "./collapsible-routine"
 import { SkinJournalCalendar } from "./skin-journal-calendar"
@@ -79,23 +79,14 @@ export function DashboardOverview() {
         `
       }}>
       <div className="container mx-auto px-4 py-4 md:py-8 pb-20 md:pb-8">
-        <div className="mb-6 md:mb-8">
+        <div className="mb-4 md:mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground text-balance">Welcome back to your skin journey</h1>
           <p className="mt-1 md:mt-2 text-sm md:text-base text-muted-foreground">Track your progress and stay consistent with your routine</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="mb-6 md:mb-8 grid gap-4">
-          <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Improvement</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl md:text-2xl font-bold">Track Progress</div>
-              <p className="text-xs text-muted-foreground">Upload photos to see AI analysis</p>
-            </CardContent>
-          </Card>
+        {/* Skin Journal - Top Priority */}
+        <div className="mb-6 md:mb-8">
+          <SkinJournalCalendar />
         </div>
 
         <div className="grid gap-4 md:gap-6 lg:grid-cols-2">
@@ -195,9 +186,8 @@ export function DashboardOverview() {
           </Card>
         </div>
 
-        {/* Skin Journal & Routine - Side by Side */}
-        <div className="mt-4 md:mt-6 grid gap-4 md:gap-6 lg:grid-cols-2">
-          <SkinJournalCalendar />
+        {/* Routine */}
+        <div className="mt-4 md:mt-6">
           <CollapsibleRoutine library={productLibrary} onProductAdd={addProductToLibrary} />
         </div>
       </div>

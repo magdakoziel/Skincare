@@ -21,7 +21,8 @@
       "Bash(move /Y libacne-types-updated.ts libacne-types.ts)",
       "Bash(node sort-glossary.js:*)",
       "Bash(node:*)",
-      "Bash(del sort-acne-types.js)"
+      "Bash(del sort-acne-types.js)",
+      "Bash(npx shadcn@latest add:*)"
     ],
     "deny": [],
     "ask": []

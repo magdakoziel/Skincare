@@ -1,25 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Sparkles, Camera, Droplets, Sun } from "lucide-react"
+import { Sparkles, Camera, Droplets } from "lucide-react"
 
 export default function LandingPage() {
-  const [moodLabel, setMoodLabel] = useState("Calm")
-  const moods = ["Calm", "Glow", "Hydrated", "Balanced"]
+  const router = useRouter()
 
-  // Rotate mood label
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMoodLabel(prev => {
-        const idx = moods.indexOf(prev)
-        return moods[(idx + 1) % moods.length]
-      })
-    }, 3500)
-    return () => clearInterval(interval)
-  }, [moods])
+    // Check if user has completed onboarding
+    const onboardingCompleted = localStorage.getItem("onboardingCompleted")
+    if (onboardingCompleted === "true") {
+      router.push("/dashboard")
+    }
+  }, [router])
 
   return (
     <div className="min-h-screen relative overflow-hidden"
@@ -48,10 +45,9 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-12 md:py-16 grid lg:grid-cols-[1.1fr_0.9fr] gap-8 max-w-6xl">
-        {/* Left: Pitch */}
+      <section className="container mx-auto px-4 py-12 md:py-16 max-w-4xl">
         <Card className="relative overflow-hidden bg-background/60 backdrop-blur-md border-border/40 shadow-2xl shadow-primary/5">
-          <CardContent className="p-8 md:p-10 relative z-10">
+          <CardContent className="p-8 md:p-12 relative z-10">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-balance">
               Your Personal Skin Journey Starts Here
             </h1>
@@ -83,68 +79,6 @@ export default function LandingPage() {
             </svg>
           </div>
         </Card>
-
-        {/* Right: Widgets Preview */}
-        <div className="space-y-4">
-          <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center shadow-inner">
-                  <Droplets className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Skin Mood Ring</h3>
-                  <p className="text-sm text-muted-foreground">How does your skin feel today?</p>
-                </div>
-                <div className="w-24 h-24 rounded-full p-2.5 bg-gradient-to-br from-blue-200 via-pink-200 to-yellow-100 shadow-lg">
-                  <div className="w-full h-full rounded-full bg-background/80 backdrop-blur flex items-center justify-center font-bold text-sm">
-                    {moodLabel}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
-            <CardContent className="p-5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900 dark:to-amber-800 flex items-center justify-center shadow-inner">
-                  <Sun className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold">Weather Window</h3>
-                  <p className="text-sm text-muted-foreground">SPF & hydration tips</p>
-                </div>
-                <Button size="sm" variant="outline" className="rounded-xl">Check</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl">
-            <CardContent className="p-5 space-y-3">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 flex items-center justify-center shadow-inner">
-                  <Camera className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">Today's Ingredients</h3>
-                  <p className="text-sm text-muted-foreground">Gentle duo: PHA + panthenol</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1.5 text-xs rounded-full bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-                  Panthenol 2-5%
-                </span>
-                <span className="px-3 py-1.5 text-xs rounded-full bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700">
-                  PHA 3%
-                </span>
-                <span className="px-3 py-1.5 text-xs rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700">
-                  Skip retinoids today
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </section>
 
       {/* Features Section */}

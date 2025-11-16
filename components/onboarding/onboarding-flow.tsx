@@ -69,6 +69,7 @@ export function OnboardingFlow() {
   const handleComplete = async () => {
     try {
       localStorage.setItem("skinProfile", JSON.stringify(data))
+      localStorage.setItem("onboardingCompleted", "true")
       router.push("/dashboard")
     } catch (error) {
       console.error("[v0] Error completing onboarding:", error)

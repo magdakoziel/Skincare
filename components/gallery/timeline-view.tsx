@@ -140,9 +140,9 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {group.photos.map((photo, photoIndex) => (
-                  <div key={photo._id || photoIndex} className="flex flex-col gap-4 sm:flex-row relative group">
+                  <div key={photo._id || photoIndex} className="relative group rounded-lg border border-border p-3 hover:border-primary/50 transition-colors">
                     <div className="absolute top-2 right-2 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -173,24 +173,24 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
                     <img
                       src={photo.url || "/placeholder.svg"}
                       alt={photo.caption || "Skin photo"}
-                      className="h-48 w-full rounded-lg object-cover sm:w-48"
+                      className="w-full aspect-square rounded-lg object-cover mb-3"
                     />
-                    <div className="flex-1 space-y-3">
+                    <div className="space-y-2">
                       {photo.caption && (
                         <div>
-                          <p className="text-foreground">{photo.caption}</p>
+                          <p className="text-sm text-foreground line-clamp-2">{photo.caption}</p>
                         </div>
                       )}
 
                       {photo.analysisResult && (
                         <div className="space-y-2">
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="secondary">{photo.analysisResult.acneType}</Badge>
-                            <Badge variant="outline">{photo.analysisResult.severity}</Badge>
+                          <div className="flex flex-wrap gap-1.5">
+                            <Badge variant="secondary" className="text-xs">{photo.analysisResult.acneType}</Badge>
+                            <Badge variant="outline" className="text-xs">{photo.analysisResult.severity}</Badge>
                           </div>
                           {photo.analysisResult.affectedAreas.length > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              Affected areas: {photo.analysisResult.affectedAreas.join(", ")}
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {photo.analysisResult.affectedAreas.join(", ")}
                             </p>
                           )}
                         </div>
