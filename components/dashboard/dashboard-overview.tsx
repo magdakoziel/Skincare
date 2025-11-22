@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Camera, Sparkles, ArrowRight, Droplets } from "lucide-react"
 import Link from "next/link"
 import { CollapsibleRoutine } from "./collapsible-routine"
@@ -144,6 +145,27 @@ export function DashboardOverview() {
               <CardContent className="space-y-3">
                 {skinProfile ? (
                   <>
+                    {/* User demographics */}
+                    {(skinProfile.age || skinProfile.gender || skinProfile.country) && (
+                      <div className="flex flex-wrap gap-2 pb-2 border-b border-border/40">
+                        {skinProfile.age && (
+                          <Badge variant="outline" className="text-xs">
+                            Age {skinProfile.age}
+                          </Badge>
+                        )}
+                        {skinProfile.gender && (
+                          <Badge variant="outline" className="text-xs capitalize">
+                            {skinProfile.gender}
+                          </Badge>
+                        )}
+                        {skinProfile.country && (
+                          <Badge variant="outline" className="text-xs">
+                            {skinProfile.country}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+
                     {primaryConcern && (
                       <p className="text-sm text-muted-foreground">
                         Primary concern:&nbsp;
