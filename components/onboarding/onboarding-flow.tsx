@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { InitialScreening, type InitialScreeningData } from "./initial-screening"
 import { WelcomeStep } from "./welcome-step"
 import { SkinTypeStep } from "./skin-type-step"
 import { BreakoutFrequencyStep } from "./breakout-frequency-step"
@@ -38,7 +39,18 @@ export type OnboardingData = {
 
 export function OnboardingFlow() {
   const router = useRouter()
+  const [screeningCompleted, setScreeningCompleted] = useState(false)
+  const [screeningData, setScreeningData] = useState<InitialScreeningData | null>(null)
   const [step, setStep] = useState(0)
+
+  // Check if screening was already completed
+  useEffect(() => {
+    const saved = localStorage.getItem("initialScreening")
+    if (saved) {
+      setScreeningData(JSON.parse(saved))
+      setScreeningCompleted(true)
+    }
+  }, [])
   const [data, setData] = useState<OnboardingData>({
     skinType: "",
     breakoutFrequency: "",
@@ -66,10 +78,16 @@ export function OnboardingFlow() {
     setStep((prev) => prev - 1)
   }
 
+  const handleScreeningComplete = (screeningInfo: InitialScreeningData) => {
+    setScreeningData(screeningInfo)
+    setScreeningCompleted(true)
+  }
+
   const handleComplete = async (extras?: { aiInsights?: QuizAIInsights | null }) => {
     try {
       const profilePayload = {
         ...data,
+        ...screeningData,
         aiInsights: extras?.aiInsights ?? null,
       }
       localStorage.setItem("skinProfile", JSON.stringify(profilePayload))
@@ -78,6 +96,11 @@ export function OnboardingFlow() {
     } catch (error) {
       console.error("[v0] Error completing onboarding:", error)
     }
+  }
+
+  // Show initial screening if not completed
+  if (!screeningCompleted) {
+    return <InitialScreening onComplete={handleScreeningComplete} />
   }
 
   // Total steps excluding welcome screen
