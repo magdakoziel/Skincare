@@ -2,8 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Droplets, Flame, Scale, AlertTriangle, Sparkles } from "lucide-react"
 import type { OnboardingData } from "./onboarding-flow"
 
 type SkinTypeStepProps = {
@@ -14,11 +13,51 @@ type SkinTypeStepProps = {
 }
 
 const skinTypes = [
-  { value: "oily", label: "Oily", description: "Shiny, prone to breakouts" },
-  { value: "dry", label: "Dry", description: "Tight, flaky, rough texture" },
-  { value: "combination", label: "Combination", description: "Oily T-zone, dry cheeks" },
-  { value: "sensitive", label: "Sensitive", description: "Easily irritated, reactive" },
-  { value: "normal", label: "Normal", description: "Balanced, not too oily or dry" },
+  {
+    value: "oily",
+    label: "Oily",
+    description: "Shiny, prone to breakouts",
+    icon: Flame,
+    color: "from-orange-500 to-yellow-500",
+    bgColor: "bg-orange-50 dark:bg-orange-950/30",
+    borderColor: "border-orange-200 dark:border-orange-800"
+  },
+  {
+    value: "dry",
+    label: "Dry",
+    description: "Tight, flaky, rough texture",
+    icon: Droplets,
+    color: "from-blue-500 to-cyan-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800"
+  },
+  {
+    value: "combination",
+    label: "Combination",
+    description: "Oily T-zone, dry cheeks",
+    icon: Scale,
+    color: "from-purple-500 to-pink-500",
+    bgColor: "bg-purple-50 dark:bg-purple-950/30",
+    borderColor: "border-purple-200 dark:border-purple-800"
+  },
+  {
+    value: "sensitive",
+    label: "Sensitive",
+    description: "Easily irritated, reactive",
+    icon: AlertTriangle,
+    color: "from-red-500 to-rose-500",
+    bgColor: "bg-red-50 dark:bg-red-950/30",
+    borderColor: "border-red-200 dark:border-red-800"
+  },
+  {
+    value: "normal",
+    label: "Normal",
+    description: "Balanced, not too oily or dry",
+    icon: Sparkles,
+    color: "from-green-500 to-emerald-500",
+    bgColor: "bg-green-50 dark:bg-green-950/30",
+    borderColor: "border-green-200 dark:border-green-800"
+  },
 ]
 
 export function SkinTypeStep({ data, setData, onNext, onBack }: SkinTypeStepProps) {
@@ -28,27 +67,65 @@ export function SkinTypeStep({ data, setData, onNext, onBack }: SkinTypeStepProp
 
   return (
     <Card className="border-border">
-      <CardHeader>
+      <CardHeader className="text-center pb-4">
         <CardTitle className="text-2xl">What's your skin type?</CardTitle>
         <CardDescription>Select the option that best describes your skin</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <RadioGroup value={data.skinType} onValueChange={handleSelect} className="space-y-3">
-          {skinTypes.map((type) => (
-            <div
-              key={type.value}
-              className="flex items-start space-x-3 rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
-            >
-              <RadioGroupItem value={type.value} id={type.value} className="mt-1" />
-              <Label htmlFor={type.value} className="flex-1 cursor-pointer">
-                <div className="font-semibold text-card-foreground">{type.label}</div>
-                <div className="text-sm text-muted-foreground">{type.description}</div>
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-        <div className="flex gap-3">
-          <Button onClick={onBack} variant="outline" className="flex-1 bg-transparent">
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {skinTypes.map((type) => {
+            const Icon = type.icon
+            const isSelected = data.skinType === type.value
+
+            return (
+              <button
+                key={type.value}
+                onClick={() => handleSelect(type.value)}
+                className={`relative overflow-hidden rounded-xl border-2 p-4 text-left transition-all hover:scale-[1.02] ${
+                  isSelected
+                    ? `${type.borderColor} ${type.bgColor} shadow-lg`
+                    : "border-border bg-background hover:bg-accent/50"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${type.color} shadow-lg`}
+                  >
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm mb-1">
+                      {type.label}
+                    </h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {type.description}
+                    </p>
+                  </div>
+                  {isSelected && (
+                    <div className="absolute top-2 right-2">
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br ${type.color}`}>
+                        <svg
+                          className="h-4 w-4 text-white"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <Button onClick={onBack} variant="outline" className="flex-1">
             Back
           </Button>
           <Button onClick={onNext} disabled={!data.skinType} className="flex-1">
