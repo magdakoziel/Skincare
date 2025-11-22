@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { InitialScreening, type InitialScreeningData } from "./initial-screening"
 import { WelcomeStep } from "./welcome-step"
+import { PrimaryConcernStep } from "./primary-concern-step"
 import { SkinTypeStep } from "./skin-type-step"
 import { BreakoutFrequencyStep } from "./breakout-frequency-step"
 import { BreakoutAppearanceStep } from "./breakout-appearance-step"
@@ -19,6 +20,7 @@ import { QuizResultsStep, type QuizAIInsights } from "./quiz-results-step"
 import { Progress } from "@/components/ui/progress"
 
 export type OnboardingData = {
+  primaryConcern: string
   skinType: string
   breakoutFrequency: string
   breakoutAppearance: string
@@ -52,6 +54,7 @@ export function OnboardingFlow() {
     }
   }, [])
   const [data, setData] = useState<OnboardingData>({
+    primaryConcern: "",
     skinType: "",
     breakoutFrequency: "",
     breakoutAppearance: "",
@@ -103,13 +106,14 @@ export function OnboardingFlow() {
     return <InitialScreening onComplete={handleScreeningComplete} />
   }
 
-  // Total steps excluding welcome screen
-  const totalSteps = 12
+  // Total steps excluding welcome screen (now 13 with primary concern)
+  const totalSteps = 13
   // Progress bar should only show after welcome screen, so we use step - 1
   const progress = step > 0 ? ((step - 1) / totalSteps) * 100 : 0
 
   const steps = [
     <WelcomeStep key="welcome" onNext={handleNext} />,
+    <PrimaryConcernStep key="primary-concern" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
     <SkinTypeStep key="skin-type" data={data} setData={setData} onNext={handleNext} onBack={handleBack} />,
     <BreakoutFrequencyStep
       key="breakout-frequency"
