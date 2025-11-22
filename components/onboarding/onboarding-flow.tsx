@@ -14,7 +14,7 @@ import { MakeupSpfStep } from "./makeup-spf-step"
 import { ProductChangesStep } from "./product-changes-step"
 import { SkinReactionStep } from "./skin-reaction-step"
 import { PhotoUploadStep } from "./photo-upload-step"
-import { QuizResultsStep } from "./quiz-results-step"
+import { QuizResultsStep, type QuizAIInsights } from "./quiz-results-step"
 import { Progress } from "@/components/ui/progress"
 
 export type OnboardingData = {
@@ -66,9 +66,13 @@ export function OnboardingFlow() {
     setStep((prev) => prev - 1)
   }
 
-  const handleComplete = async () => {
+  const handleComplete = async (extras?: { aiInsights?: QuizAIInsights | null }) => {
     try {
-      localStorage.setItem("skinProfile", JSON.stringify(data))
+      const profilePayload = {
+        ...data,
+        aiInsights: extras?.aiInsights ?? null,
+      }
+      localStorage.setItem("skinProfile", JSON.stringify(profilePayload))
       localStorage.setItem("onboardingCompleted", "true")
       router.push("/dashboard")
     } catch (error) {

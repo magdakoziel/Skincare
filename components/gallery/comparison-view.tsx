@@ -1,12 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { format } from "date-fns"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowRight, Calendar, Check } from "lucide-react"
+import { ArrowRight, Calendar, Check, Loader2, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { PhotoAnalysisResult as AnalysisDetails } from "@/lib/analyze-photo"
+import { Button } from "@/components/ui/button"
 
 type Photo = {
+  id?: string
   _id?: string
   url: string
   caption?: string
@@ -16,16 +19,30 @@ type Photo = {
     acneType: string
     severity: string
   }
+  analysisDetails?: AnalysisDetails
 }
 
 type ComparisonViewProps = {
   photos: Photo[]
 }
 
+type PhotoProgressInsight = {
+  improvementScore: number
+  headline: string
+  summary: string
+  notableChanges: string[]
+  nextSteps: string[]
+}
+
 export function ComparisonView({ photos }: ComparisonViewProps) {
   const [photo1, setPhoto1] = useState<string>("")
   const [photo2, setPhoto2] = useState<string>("")
   const [selectingFor, setSelectingFor] = useState<"photo1" | "photo2" | null>(null)
+  const [progressInsight, setProgressInsight] = useState<PhotoProgressInsight | null>(null)
+  const [progressLoading, setProgressLoading] = useState(false)
+  const [progressError, setProgressError] = useState<string | null>(null)
+  const latestRequestRef = useRef<string>("")
+  const [showComparison, setShowComparison] = useState(false)
 
   if (photos.length === 0) {
     return (
@@ -47,23 +64,113 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
     )
   }
 
-  const sortedPhotos = [...photos].sort((a, b) => {
-    const dateA = a.date ? new Date(a.date).getTime() : a.createdAt || 0
-    const dateB = b.date ? new Date(b.date).getTime() : b.createdAt || 0
-    return dateA - dateB
-  })
-  const firstPhoto = sortedPhotos.find((p, index) => (p._id || String(index)) === photo1)
-  const secondPhoto = sortedPhotos.find((p, index) => (p._id || String(index)) === photo2)
+  const sortedPhotos = useMemo(() => {
+    return [...photos].sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : a.createdAt || 0
+      const dateB = b.date ? new Date(b.date).getTime() : b.createdAt || 0
+      return dateA - dateB
+    })
+  }, [photos])
+
+  const resolveIdentifier = (photo: Photo, index: number) => photo.id || photo._id || String(index)
+  const getTimestamp = (photo?: Photo) => (photo?.date ? new Date(photo.date).getTime() : photo?.createdAt || 0)
+
+  const firstPhoto = sortedPhotos.find((p, index) => resolveIdentifier(p, index) === photo1)
+  const secondPhoto = sortedPhotos.find((p, index) => resolveIdentifier(p, index) === photo2)
+
+  useEffect(() => {
+    const hasFirst = photo1 ? sortedPhotos.some((p, index) => resolveIdentifier(p, index) === photo1) : false
+    const hasSecond = photo2 ? sortedPhotos.some((p, index) => resolveIdentifier(p, index) === photo2) : false
+    if (photo1 && !hasFirst) {
+      setPhoto1("")
+      setShowComparison(false)
+    }
+    if (photo2 && !hasSecond) {
+      setPhoto2("")
+      setShowComparison(false)
+    }
+  }, [sortedPhotos, photo1, photo2])
 
   const handlePhotoSelect = (photoId: string) => {
     if (selectingFor === "photo1") {
       setPhoto1(photoId)
       setSelectingFor(null)
+      setShowComparison(false)
     } else if (selectingFor === "photo2") {
       setPhoto2(photoId)
       setSelectingFor(null)
+      setShowComparison(false)
     }
   }
+
+  useEffect(() => {
+    if (
+      !showComparison ||
+      !firstPhoto ||
+      !secondPhoto ||
+      !firstPhoto.analysisDetails ||
+      !secondPhoto.analysisDetails
+    ) {
+      setProgressInsight(null)
+      setProgressError(null)
+      setProgressLoading(false)
+      return
+    }
+
+    const firstTime = getTimestamp(firstPhoto)
+    const secondTime = getTimestamp(secondPhoto)
+    const earlier = firstTime <= secondTime ? firstPhoto : secondPhoto
+    const later = earlier === firstPhoto ? secondPhoto : firstPhoto
+    const requestKey = `${resolveIdentifier(firstPhoto, 0)}-${resolveIdentifier(secondPhoto, 0)}`
+    latestRequestRef.current = requestKey
+    setProgressLoading(true)
+    setProgressError(null)
+
+    const severityMap: Record<string, number> = {
+      severe: 100,
+      moderate: 60,
+      mild: 30,
+      clear: 0,
+    }
+    const earlierSeverity = severityMap[earlier.analysisResult?.severity?.toLowerCase() || ""] ?? 50
+    const laterSeverity = severityMap[later.analysisResult?.severity?.toLowerCase() || ""] ?? 50
+
+    fetch("/api/photo-progress", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        earlier: earlier.analysisDetails,
+        later: later.analysisDetails,
+        metadata: {
+          earlierDate: earlier.date,
+          laterDate: later.date,
+          earlierCaption: earlier.caption,
+          laterCaption: later.caption,
+          severityChange: earlierSeverity - laterSeverity,
+        },
+      }),
+    })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => null)
+        if (!response.ok) {
+          throw new Error(payload?.error || "Gemini progress unavailable")
+        }
+        if (latestRequestRef.current === requestKey) {
+          setProgressInsight(payload)
+        }
+      })
+      .catch((error) => {
+        console.error("AI progress error:", error)
+        if (latestRequestRef.current === requestKey) {
+          setProgressError("AI progress summary is unavailable right now.")
+        }
+      })
+      .finally(() => {
+        if (latestRequestRef.current === requestKey) {
+          setProgressLoading(false)
+        }
+      })
+  }, [firstPhoto, secondPhoto, showComparison])
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -124,7 +231,7 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
           {selectingFor && (
             <div className="grid gap-2 md:gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
               {sortedPhotos.map((photo, index) => {
-                const photoId = photo._id || String(index)
+                const photoId = resolveIdentifier(photo, index)
                 const photoDate = photo.date ? new Date(photo.date) : (photo.createdAt ? new Date(photo.createdAt) : new Date())
 
                 return (
@@ -157,10 +264,25 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
               })}
             </div>
           )}
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {firstPhoto && secondPhoto
+                ? "Click compare to view AI progress summary."
+                : "Select Photo 1 and Photo 2 to enable comparison."}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => setShowComparison(true)}
+              disabled={!firstPhoto || !secondPhoto}
+            >
+              Compare selected
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      {firstPhoto && secondPhoto && (
+      {showComparison && firstPhoto && secondPhoto && (
         <>
           {/* Side-by-side comparison */}
           <Card className="border-border">
@@ -323,3 +445,4 @@ export function ComparisonView({ photos }: ComparisonViewProps) {
     </div>
   )
 }
+

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, X, Sun, Moon, ChevronDown, Scan } from "lucide-react"
+import { Plus, X, Sun, Moon, ChevronDown, Scan, Calendar, Check } from "lucide-react"
 import { SavedProduct } from "./product-library"
 import { BarcodeScanner } from "@/components/barcode-scanner"
 import {
@@ -39,7 +39,8 @@ type RoutineManagerProps = {
 export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineManagerProps) {
   const [morningRoutine, setMorningRoutine] = useState<Product[]>([])
   const [eveningRoutine, setEveningRoutine] = useState<Product[]>([])
-  const [activeTab, setActiveTab] = useState<"morning" | "evening">("morning")
+  const [weeklyRoutine, setWeeklyRoutine] = useState<Product[]>([])
+  const [activeTab, setActiveTab] = useState<"morning" | "evening" | "weekly">("morning")
   const [open, setOpen] = useState(false)
   const [useLibrary, setUseLibrary] = useState(true)
   const [showScanner, setShowScanner] = useState(false)
@@ -56,15 +57,17 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
     const routines = getRoutines()
     setMorningRoutine(routines.morning)
     setEveningRoutine(routines.evening)
+    setWeeklyRoutine(routines.weekly)
   }, [])
 
   // Save routines whenever they change
   useEffect(() => {
     saveRoutines({
       morning: morningRoutine,
-      evening: eveningRoutine
+      evening: eveningRoutine,
+      weekly: weeklyRoutine
     })
-  }, [morningRoutine, eveningRoutine])
+  }, [morningRoutine, eveningRoutine, weeklyRoutine])
 
   const steps = [
     { value: "cleanser", label: "Cleanser" },
@@ -92,8 +95,10 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
 
     if (activeTab === "morning") {
       setMorningRoutine([...morningRoutine, product])
-    } else {
+    } else if (activeTab === "evening") {
       setEveningRoutine([...eveningRoutine, product])
+    } else {
+      setWeeklyRoutine([...weeklyRoutine, product])
     }
     setOpen(false)
   }
@@ -125,8 +130,10 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
     // Add to routine
     if (activeTab === "morning") {
       setMorningRoutine([...morningRoutine, product])
-    } else {
+    } else if (activeTab === "evening") {
       setEveningRoutine([...eveningRoutine, product])
+    } else {
+      setWeeklyRoutine([...weeklyRoutine, product])
     }
 
     // Also add to library if callback provided
@@ -152,30 +159,44 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
   const removeProduct = (id: string) => {
     if (activeTab === "morning") {
       setMorningRoutine(morningRoutine.filter(p => p.id !== id))
-    } else {
+    } else if (activeTab === "evening") {
       setEveningRoutine(eveningRoutine.filter(p => p.id !== id))
+    } else {
+      setWeeklyRoutine(weeklyRoutine.filter(p => p.id !== id))
     }
   }
 
-  const currentRoutine = activeTab === "morning" ? morningRoutine : eveningRoutine
+  const currentRoutine = activeTab === "morning" ? morningRoutine : activeTab === "evening" ? eveningRoutine : weeklyRoutine
 
   return (
     <div className="space-y-6">
       {/* Tab Selector */}
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <Button
           variant={activeTab === "morning" ? "default" : "outline"}
           onClick={() => setActiveTab("morning")}
           className="flex-1">
-          <Sun className="mr-2 h-4 w-4" />
-          Morning ({morningRoutine.length})
+          <Sun className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Morning</span>
+          <span className="sm:hidden">AM</span>
+          <span className="ml-1">({morningRoutine.length})</span>
         </Button>
         <Button
           variant={activeTab === "evening" ? "default" : "outline"}
           onClick={() => setActiveTab("evening")}
           className="flex-1">
-          <Moon className="mr-2 h-4 w-4" />
-          Evening ({eveningRoutine.length})
+          <Moon className="mr-1 h-4 w-4" />
+          <span className="hidden sm:inline">Evening</span>
+          <span className="sm:hidden">PM</span>
+          <span className="ml-1">({eveningRoutine.length})</span>
+        </Button>
+        <Button
+          variant={activeTab === "weekly" ? "default" : "outline"}
+          onClick={() => setActiveTab("weekly")}
+          className="flex-1">
+          <Calendar className="mr-1 h-4 w-4" />
+          Weekly
+          <span className="ml-1">({weeklyRoutine.length})</span>
         </Button>
       </div>
 
@@ -183,7 +204,7 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
       <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
         <h3 className="text-sm font-semibold">Add Product to Routine</h3>
 
-        {/* Toggle between library, scan, and manual */}
+        {/* Toggle between library and manual */}
         <div className="flex gap-2">
           <Button
             variant={useLibrary ? "default" : "outline"}
@@ -191,14 +212,6 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
             onClick={() => setUseLibrary(true)}
             className="flex-1">
             From Library
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowScanner(true)}
-            className="flex-1">
-            <Scan className="mr-1 h-3 w-3" />
-            Scan
           </Button>
           <Button
             variant={!useLibrary ? "default" : "outline"}
@@ -253,6 +266,25 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
           </div>
         ) : (
           <div className="space-y-4">
+            {/* Scan button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowScanner(true)}
+              className="w-full">
+              <Scan className="mr-2 h-4 w-4" />
+              Scan Product
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-muted/30 px-2 text-muted-foreground">Or enter manually</span>
+              </div>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="product-name">Product Name *</Label>
@@ -295,19 +327,24 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
-              <Textarea
-                id="notes"
-                placeholder="e.g., Use PM only"
-                value={newProduct.notes}
-                onChange={(e) => setNewProduct({ ...newProduct, notes: e.target.value })}
-                rows={2}
-              />
+              <div className="flex gap-2">
+                <Textarea
+                  id="notes"
+                  placeholder="e.g., Use PM only"
+                  value={newProduct.notes}
+                  onChange={(e) => setNewProduct({ ...newProduct, notes: e.target.value })}
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={addProduct}
+                  size="icon"
+                  className="h-auto w-10 shrink-0"
+                  disabled={!newProduct.name.trim()}>
+                  <Check className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
-
-            <Button onClick={addProduct} className="w-full">
-              <Plus className="mr-2 h-4 w-4" />
-              Add to {activeTab === "morning" ? "Morning" : "Evening"} Routine
-            </Button>
           </div>
         )}
       </div>
@@ -315,7 +352,7 @@ export function RoutineManagerWithLibrary({ library, onProductAdd }: RoutineMana
       {/* Current Routine List */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold">
-          {activeTab === "morning" ? "Morning" : "Evening"} Routine ({currentRoutine.length} products)
+          {activeTab === "morning" ? "Morning" : activeTab === "evening" ? "Evening" : "Weekly"} Routine ({currentRoutine.length} products)
         </h3>
 
         {currentRoutine.length === 0 ? (

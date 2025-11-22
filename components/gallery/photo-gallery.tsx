@@ -12,17 +12,100 @@ import { GridView } from "./grid-view"
 import { ComparisonView } from "./comparison-view"
 import { analyzePhoto, type PhotoAnalysisResult as AnalysisResult } from "@/lib/analyze-photo"
 
+type PersistResult = {
+  success: boolean
+  trimmed: boolean
+  storedPhotos: any[]
+}
+
+const isQuotaError = (error: unknown): error is DOMException => {
+  if (!(error instanceof DOMException)) return false
+  return (
+    error.name === "QuotaExceededError" ||
+    error.name === "NS_ERROR_DOM_QUOTA_REACHED" ||
+    (typeof error.code === "number" && (error.code === 22 || error.code === 1014))
+  )
+}
+
+const createPhotoId = () => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  return `photo-${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
+const buildAnalysisSummary = (analysis: AnalysisResult) => {
+  const primaryDetection = analysis.detectedAcneTypes?.[0]
+  return {
+    acneType: primaryDetection?.type?.name || "AI Insight",
+    severity: analysis.severity,
+    affectedAreas: analysis.affectedAreas,
+  }
+}
+
 export function PhotoGallery() {
   const [showUpload, setShowUpload] = useState(false)
   const [view, setView] = useState<"timeline" | "grid" | "comparison">("timeline")
   const [photos, setPhotos] = useState<any[]>([])
   const [analyzing, setAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [storageNotice, setStorageNotice] = useState<string | null>(null)
+
+  const persistPhotos = (nextPhotos: any[]): PersistResult => {
+    let workingSet = [...nextPhotos]
+    let trimmed = false
+
+    while (true) {
+      try {
+        localStorage.setItem("photos", JSON.stringify(workingSet))
+        return { success: true, trimmed, storedPhotos: workingSet }
+      } catch (error) {
+        if (isQuotaError(error) && workingSet.length > 0) {
+          workingSet = workingSet.slice(1)
+          trimmed = true
+          continue
+        }
+        console.error("Failed to store photos:", error)
+        break
+      }
+    }
+
+    return { success: false, trimmed: false, storedPhotos: photos }
+  }
+
+  const handlePersistFeedback = (result: PersistResult) => {
+    if (!result.success) {
+      setStorageNotice("Nie mozemy zapisac zdjecia, poniewaz pamiec przegladarki jest pelna. Usun kilka zdjec i sprobuj ponownie.")
+      return false
+    }
+    setStorageNotice(
+      result.trimmed
+        ? "Miejsca w pamieci bylo niewiele, wiec najstarsze zdjecia zostaly automatycznie usuniete."
+        : null,
+    )
+    return true
+  }
 
   useEffect(() => {
     const savedPhotos = localStorage.getItem("photos")
-    if (savedPhotos) {
-      setPhotos(JSON.parse(savedPhotos))
+    if (!savedPhotos) return
+
+    try {
+          const parsed = JSON.parse(savedPhotos)
+          let mutated = false
+          const normalized = parsed.map((photo: any) => {
+            const ensureId = photo.id || createPhotoId()
+            const normalizedPhoto = { ...photo, id: ensureId }
+            if (!photo.id) mutated = true
+            return normalizedPhoto
+          })
+      if (mutated) {
+        localStorage.setItem("photos", JSON.stringify(normalized))
+      }
+      setPhotos(normalized)
+    } catch (error) {
+      console.error("Failed to parse stored photos:", error)
+      setPhotos([])
     }
   }, [])
 
@@ -30,13 +113,38 @@ export function PhotoGallery() {
     const savedPhotos = localStorage.getItem("photos")
     if (savedPhotos) {
       setPhotos(JSON.parse(savedPhotos))
+    } else {
+      setPhotos([])
     }
-    setShowUpload(false)
   }
 
   const handlePhotoUpdate = (updatedPhotos: any[]) => {
-    localStorage.setItem("photos", JSON.stringify(updatedPhotos))
-    setPhotos(updatedPhotos)
+    const result = persistPhotos(updatedPhotos)
+    if (!handlePersistFeedback(result)) {
+      return
+    }
+    setPhotos(result.storedPhotos)
+  }
+
+  const attachAnalysisToPhoto = (photoId: string, analysis: AnalysisResult) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("photos") || "[]")
+      const updated = saved.map((photo: any) =>
+        photo.id === photoId
+          ? {
+              ...photo,
+              analysisResult: buildAnalysisSummary(analysis),
+              analysisDetails: analysis,
+            }
+          : photo,
+      )
+      const result = persistPhotos(updated)
+      if (handlePersistFeedback(result)) {
+        setPhotos(result.storedPhotos)
+      }
+    } catch (error) {
+      console.error("Unable to attach analysis to photo:", error)
+    }
   }
 
   return (
@@ -51,6 +159,12 @@ export function PhotoGallery() {
           Upload Photo
         </Button>
       </div>
+
+      {storageNotice && (
+        <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/50 dark:bg-amber-500/10 dark:text-amber-200">
+          {storageNotice}
+        </div>
+      )}
 
       <Tabs value={view} onValueChange={(v: string) => setView(v as typeof view)} className="space-y-4 md:space-y-6">
         <TabsList className="grid w-full grid-cols-3 lg:w-auto h-11">
@@ -85,10 +199,15 @@ export function PhotoGallery() {
           onClose={() => setShowUpload(false)}
           onUpload={async (photo) => {
             const savedPhotos = JSON.parse(localStorage.getItem("photos") || "[]")
-            const newPhoto = { ...photo, date: new Date().toISOString() }
+            const photoId = createPhotoId()
+            const takenDate = photo.takenAt ? new Date(photo.takenAt) : new Date()
+            const { takenAt, ...photoPayload } = photo
+            const newPhoto = { ...photoPayload, id: photoId, date: takenDate.toISOString() }
 
-            // Save photo first
-            localStorage.setItem("photos", JSON.stringify([...savedPhotos, newPhoto]))
+            const persistResult = persistPhotos([...savedPhotos, newPhoto])
+            if (!handlePersistFeedback(persistResult)) {
+              throw new Error("storage-quota-exceeded")
+            }
             handlePhotoAdded()
 
             // If analyze is enabled, run AI analysis
@@ -97,6 +216,7 @@ export function PhotoGallery() {
               try {
                 const result = await analyzePhoto(photo.url)
                 setAnalysisResult(result)
+                attachAnalysisToPhoto(photoId, result)
               } catch (error) {
                 console.error("Error analyzing photo:", error)
               } finally {
@@ -124,6 +244,9 @@ export function PhotoGallery() {
       {/* Analysis Results Dialog */}
       <Dialog open={!!analysisResult} onOpenChange={() => setAnalysisResult(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>AI analysis results</DialogTitle>
+          </DialogHeader>
           {analysisResult && <PhotoAnalysisResult result={analysisResult} onClose={() => setAnalysisResult(null)} />}
         </DialogContent>
       </Dialog>

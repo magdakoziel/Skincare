@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Calendar, MoreVertical, Pencil, Trash2 } from "lucide-react"
+import { Calendar, MoreVertical, Pencil, Trash2, Sparkles } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,8 +32,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { PhotoAnalysisResult } from "@/components/gallery/photo-analysis-result"
+import type { PhotoAnalysisResult as AnalysisResult } from "@/lib/analyze-photo"
 
 type Photo = {
+  id?: string
   _id?: string
   url: string
   caption?: string
@@ -44,6 +47,7 @@ type Photo = {
     severity: string
     affectedAreas: string[]
   }
+  analysisDetails?: AnalysisResult
 }
 
 type TimelineViewProps = {
@@ -55,6 +59,9 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
   const [editingPhoto, setEditingPhoto] = useState<Photo | null>(null)
   const [editCaption, setEditCaption] = useState("")
   const [deletingPhoto, setDeletingPhoto] = useState<Photo | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
+
+  const getPhotoKey = (photo: Photo) => photo.id || photo._id || photo.url
 
   const handleEditClick = (photo: Photo) => {
     setEditingPhoto(photo)
@@ -64,10 +71,10 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
   const handleSaveEdit = () => {
     if (!editingPhoto || !onPhotoUpdate) return
 
-    const updatedPhotos = photos.map(p =>
-      (p._id || p.url) === (editingPhoto._id || editingPhoto.url)
+    const updatedPhotos = photos.map((p) =>
+      getPhotoKey(p) === getPhotoKey(editingPhoto)
         ? { ...p, caption: editCaption }
-        : p
+        : p,
     )
 
     onPhotoUpdate(updatedPhotos)
@@ -78,9 +85,7 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
   const handleDeleteConfirm = () => {
     if (!deletingPhoto || !onPhotoUpdate) return
 
-    const updatedPhotos = photos.filter(p =>
-      (p._id || p.url) !== (deletingPhoto._id || deletingPhoto.url)
-    )
+    const updatedPhotos = photos.filter((p) => getPhotoKey(p) !== getPhotoKey(deletingPhoto))
 
     onPhotoUpdate(updatedPhotos)
     setDeletingPhoto(null)
@@ -142,7 +147,10 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {group.photos.map((photo, photoIndex) => (
-                  <div key={photo._id || photoIndex} className="relative group rounded-lg border border-border p-3 hover:border-primary/50 transition-colors">
+                  <div
+                    key={getPhotoKey(photo) || photoIndex}
+                    className="relative group rounded-lg border border-border p-3 hover:border-primary/50 transition-colors"
+                  >
                     <div className="absolute top-2 right-2 z-10">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -155,6 +163,13 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            disabled={!photo.analysisDetails}
+                            onClick={() => photo.analysisDetails && setAnalysisResult(photo.analysisDetails)}
+                          >
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            View AI Analysis
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleEditClick(photo)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit Caption
@@ -250,6 +265,12 @@ export function TimelineView({ photos, onPhotoUpdate }: TimelineViewProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!analysisResult} onOpenChange={(open) => !open && setAnalysisResult(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          {analysisResult && <PhotoAnalysisResult result={analysisResult} onClose={() => setAnalysisResult(null)} />}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

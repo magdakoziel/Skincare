@@ -9,24 +9,31 @@ export type RoutineProduct = {
 export type Routines = {
   morning: RoutineProduct[]
   evening: RoutineProduct[]
+  weekly: RoutineProduct[]
 }
 
 const STORAGE_KEY = "skincare-routines"
 
 export function getRoutines(): Routines {
   if (typeof window === "undefined") {
-    return { morning: [], evening: [] }
+    return { morning: [], evening: [], weekly: [] }
   }
 
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (!stored) {
-      return { morning: [], evening: [] }
+      return { morning: [], evening: [], weekly: [] }
     }
-    return JSON.parse(stored)
+    const parsed = JSON.parse(stored)
+    // Ensure weekly exists for backwards compatibility
+    return {
+      morning: parsed.morning || [],
+      evening: parsed.evening || [],
+      weekly: parsed.weekly || []
+    }
   } catch (error) {
     console.error("Error loading routines:", error)
-    return { morning: [], evening: [] }
+    return { morning: [], evening: [], weekly: [] }
   }
 }
 

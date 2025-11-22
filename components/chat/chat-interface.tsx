@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/drawer"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+type SupportedLanguage = "pl" | "en"
+
 type Message = {
   _id: string
   role: "user" | "assistant"
@@ -143,26 +145,81 @@ export function ChatInterface() {
     }
   }
 
+  const detectLanguage = (text: string): SupportedLanguage => {
+    if (/[ąćęłńóśźżĄĆĘŁŃÓŚŹŻ]/.test(text)) {
+      return "pl"
+    }
+    const normalized = text.toLowerCase()
+    const polishKeywords = ["skora", "skore", "tradzik", "zmarszczki", "czy", "prosze", "dziekuje", "mam", "polecasz"]
+    if (polishKeywords.some((keyword) => normalized.includes(keyword))) {
+      return "pl"
+    }
+    return "en"
+  }
+
+  const fallbackResponses: Record<SupportedLanguage, {
+    routine: (profile: any) => string
+    products: (profile: any) => string
+    acne: () => string
+    ingredients: () => string
+    default: (profile: any) => string
+  }> = {
+    en: {
+      routine: (profile) =>
+        `Based on your ${profile?.skinType || "skin"} type, I recommend a simple routine:\n\n**Morning:**\n1. Gentle cleanser\n2. Vitamin C serum\n3. Moisturizer\n4. SPF 30+ sunscreen\n\n**Evening:**\n1. Cleanser\n2. Treatment (like retinol or niacinamide)\n3. Moisturizer\n\nConsistency is key! Start slowly and patch test new products.`,
+      products: (profile) =>
+        `For ${profile?.concerns?.join(", ") || "your skin concerns"}, I'd recommend:\n\n1. **Cleanser**: CeraVe Foaming Facial Cleanser\n2. **Treatment**: The Ordinary Niacinamide 10% + Zinc 1%\n3. **Moisturizer**: Neutrogena Hydro Boost\n4. **Sunscreen**: La Roche-Posay Anthelios\n\nThese are gentle, effective, and suitable for most skin types. Check the Products page for more options!`,
+      acne: () =>
+        `For acne-prone skin, focus on:\n\n1. **Gentle cleansing** twice daily\n2. **Salicylic acid** or benzoyl peroxide treatments\n3. **Non-comedogenic moisturizer**\n4. **Daily SPF** (yes, even with acne!)\n\nAvoid over-washing, picking, and heavy pore-clogging products. If acne persists, consult a dermatologist.`,
+      ingredients: () =>
+        `Here are some key skincare ingredients:\n\n**Niacinamide**: Reduces inflammation, minimizes pores\n**Salicylic Acid**: Exfoliates, unclogs pores\n**Hyaluronic Acid**: Hydrates and plumps skin\n**Retinol**: Anti-aging, improves texture\n**Vitamin C**: Brightens, protects from damage\n\nIntroduce new ingredients slowly and patch test first!`,
+      default: (profile) =>
+        `That's a great question! ${
+          profile ? `Given your ${profile.skinType} skin type and concerns about ${profile.concerns?.join(", ")}, ` : ""
+        }I'd focus on a consistent routine with gentle, effective products. Want specific product recommendations or help building a routine?`,
+    },
+    pl: {
+      routine: (profile) =>
+        `Na podstawie Twojego typu skóry ${profile?.skinType || ""} polecam prostą rutynę:\n\n**Rano:**\n1. Delikatny żel do mycia\n2. Serum z witaminą C\n3. Nawilżacz\n4. Krem z filtrem SPF 30+\n\n**Wieczór:**\n1. Oczyszczanie\n2. Kuracja (np. retinol lub niacynamid)\n3. Krem nawilżający\n\nKluczem jest regularność i testowanie nowych produktów na małym fragmencie skóry.`,
+      products: (profile) =>
+        `Dla problemów takich jak ${profile?.concerns?.join(", ") || "Twoje obecne potrzeby"} polecam:\n\n1. **Żel do mycia**: CeraVe Foaming Facial Cleanser\n2. **Kuracja**: The Ordinary Niacinamide 10% + Zinc 1%\n3. **Nawilżacz**: Neutrogena Hydro Boost\n4. **SPF**: La Roche-Posay Anthelios\n\nTo lekkie, sprawdzone produkty odpowiednie dla większości typów skóry. Zajrzyj do sekcji produktów po więcej inspiracji.`,
+      acne: () =>
+        `Przy skórze trądzikowej skup się na:\n\n1. Delikatnym oczyszczaniu dwa razy dziennie\n2. Kuracjach z kwasem salicylowym lub nadtlenkiem benzoilu\n3. Lekkich, niekomedogennych kremach\n4. Codziennym SPF (to naprawdę ważne!)\n\nUnikaj nadmiernego mycia, wyciskania i ciężkich kosmetyków. Jeśli zmiany się utrzymują, rozważ wizytę u dermatologa.`,
+      ingredients: () =>
+        `Najważniejsze składniki pielęgnacyjne:\n\n**Niacynamid** – łagodzi stany zapalne i zwęża pory\n**Kwas salicylowy** – złuszcza i odblokowuje mieszki\n**Kwas hialuronowy** – nawilża i wypełnia skórę\n**Retinol** – wygładza i działa przeciwstarzeniowo\n**Witamina C** – rozświetla i chroni przed stresem oksydacyjnym\n\nWprowadzaj nowe składniki stopniowo i rób test płatkowy.`,
+      default: (profile) =>
+        `Świetne pytanie! ${
+          profile ? `Biorąc pod uwagę typ skóry ${profile.skinType} i obawy o ${profile.concerns?.join(", ")}, ` : ""
+        }warto trzymać się łagodnej, regularnej rutyny. Mogę podpowiedzieć konkretne produkty albo pomóc ją ułożyć – daj znać, czego potrzebujesz.`,
+    },
+  }
+
   const generateAIResponse = (userMessage: string): string => {
+    const language = detectLanguage(userMessage)
+    const copy = fallbackResponses[language]
     const lowerMessage = userMessage.toLowerCase()
 
-    if (lowerMessage.includes("routine") || lowerMessage.includes("steps")) {
-      return `Based on your ${skinProfile?.skinType || "skin"} type, I recommend a simple routine:\n\n**Morning:**\n1. Gentle cleanser\n2. Vitamin C serum\n3. Moisturizer\n4. SPF 30+ sunscreen\n\n**Evening:**\n1. Cleanser\n2. Treatment (like retinol or niacinamide)\n3. Moisturizer\n\nConsistency is key! Start slowly and patch test new products.`
+    if (lowerMessage.includes("routine") || lowerMessage.includes("steps") || lowerMessage.includes("rutyna")) {
+      return copy.routine(skinProfile)
     }
 
-    if (lowerMessage.includes("product") || lowerMessage.includes("recommend")) {
-      return `For ${skinProfile?.concerns?.join(", ") || "your skin concerns"}, I'd recommend:\n\n1. **Cleanser**: CeraVe Foaming Facial Cleanser\n2. **Treatment**: The Ordinary Niacinamide 10% + Zinc 1%\n3. **Moisturizer**: Neutrogena Hydro Boost\n4. **Sunscreen**: La Roche-Posay Anthelios\n\nThese are gentle, effective, and suitable for most skin types. Check the Products page for more options!`
+    if (lowerMessage.includes("product") || lowerMessage.includes("recommend") || lowerMessage.includes("produkt")) {
+      return copy.products(skinProfile)
     }
 
-    if (lowerMessage.includes("acne") || lowerMessage.includes("breakout")) {
-      return `For acne-prone skin, focus on:\n\n1. **Gentle cleansing** twice daily\n2. **Salicylic acid** or benzoyl peroxide for treatment\n3. **Non-comedogenic moisturizer**\n4. **Daily SPF** (yes, even with acne!)\n\nAvoid:\n- Over-washing (strips natural oils)\n- Picking or popping\n- Heavy, pore-clogging products\n\nIf acne persists, consider seeing a dermatologist.`
+    if (lowerMessage.includes("acne") || lowerMessage.includes("breakout") || lowerMessage.includes("tradzik")) {
+      return copy.acne()
     }
 
-    if (lowerMessage.includes("ingredient") || lowerMessage.includes("what is")) {
-      return `Great question! Here are some key skincare ingredients:\n\n**Niacinamide**: Reduces inflammation, minimizes pores\n**Salicylic Acid**: Exfoliates, unclogs pores\n**Hyaluronic Acid**: Hydrates and plumps skin\n**Retinol**: Anti-aging, improves texture\n**Vitamin C**: Brightens, protects from damage\n\nAlways introduce new ingredients slowly and patch test first!`
+    if (
+      lowerMessage.includes("ingredient") ||
+      lowerMessage.includes("what is") ||
+      lowerMessage.includes("skladnik")
+    ) {
+      return copy.ingredients()
     }
 
-    return `That's a great question! ${skinProfile ? `Given your ${skinProfile.skinType} skin type and concerns about ${skinProfile.concerns?.join(", ")}, ` : ""}I'd recommend focusing on a consistent routine with gentle, effective products. Would you like specific product recommendations or help building a routine? Feel free to ask about specific ingredients or concerns!`
+    return copy.default(skinProfile)
   }
 
   const handleSend = async (messageText?: string) => {
@@ -272,15 +329,25 @@ export function ChatInterface() {
                 <p className="text-xs md:text-sm text-muted-foreground">Ask me anything about skincare</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setHistoryOpen(true)}
-              className="gap-1 text-xs md:text-sm border-border/60 hover:bg-primary/10"
-            >
-              <History className="h-3.5 w-3.5" />
-              Historia
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={createNewConversation}
+                size="sm"
+                className="gap-1 text-xs md:text-sm bg-gradient-to-r from-purple-500 via-pink-500 to-rose-400 hover:shadow-lg hover:shadow-primary/30"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Nowy</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setHistoryOpen(true)}
+                className="gap-1 text-xs md:text-sm border-border/60 hover:bg-primary/10"
+              >
+                <History className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Historia</span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
 

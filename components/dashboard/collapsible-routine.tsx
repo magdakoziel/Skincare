@@ -21,7 +21,7 @@ export function CollapsibleRoutine({ library, onProductAdd }: CollapsibleRoutine
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>My Skincare Routine</CardTitle>
-            <CardDescription>Track your morning and evening products</CardDescription>
+            <CardDescription>Track your daily and weekly treatments</CardDescription>
           </div>
           <Button variant="ghost" size="sm">
             {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

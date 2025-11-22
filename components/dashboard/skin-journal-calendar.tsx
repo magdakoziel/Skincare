@@ -172,17 +172,29 @@ export function SkinJournalCalendar() {
   const todayStr = new Date().toISOString().split('T')[0]
 
   return (
-    <Card className="bg-background/60 backdrop-blur-md border-border/40 shadow-xl overflow-hidden">
-      <div className="relative p-4 md:p-6"
+    <Card
+      className="relative overflow-hidden border border-white/20 shadow-2xl"
+      style={{
+        background:
+          "linear-gradient(135deg, #f6edff 0%, #f1d9ff 35%, #fde1f3 70%, #fff5fb 100%)",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-80"
         style={{
-          background: `
-            linear-gradient(135deg,
-              hsl(var(--primary) / 0.08) 0%,
-              hsl(280 60% 70% / 0.12) 50%,
-              hsl(var(--primary) / 0.08) 100%
-            )
-          `
-        }}>
+          background:
+            "radial-gradient(circle at 15% 10%, rgba(255,255,255,0.6), transparent 45%), radial-gradient(circle at 85% 0%, rgba(255,255,255,0.4), transparent 50%)",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen"
+        style={{
+          backgroundImage:
+            "linear-gradient(0deg, rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
+          backgroundSize: "80px 80px",
+        }}
+      />
+      <div className="relative z-10 p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-semibold text-foreground">Skin Journal</h3>
@@ -216,8 +228,8 @@ export function SkinJournalCalendar() {
                   className={`group relative flex flex-col items-center gap-1 transition-all cursor-pointer hover:scale-110`}
                 >
                   {/* Day name */}
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase">
-                    {dayNames[idx].slice(0, 1)}
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    {dayNames[idx].slice(0, 3)}
                   </span>
 
                   {/* Circle with day number */}
@@ -245,11 +257,11 @@ export function SkinJournalCalendar() {
           /* Full Month View (Expanded) */
           <div className="space-y-4">
             {/* Calendar Navigation */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-center gap-3">
               <Button variant="outline" size="sm" onClick={previousMonth}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-center min-w-[160px]">
                 {monthNames[month]} {year}
               </h3>
               <Button variant="outline" size="sm" onClick={nextMonth}>
@@ -258,21 +270,30 @@ export function SkinJournalCalendar() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="rounded-lg border border-border overflow-hidden">
+            <div className="rounded-lg border border-border overflow-hidden mx-auto">
               {/* Day Names Header */}
-              <div className="grid grid-cols-7 bg-muted/50">
+              <div
+                className="grid bg-white/10 mx-auto"
+                style={{ gridTemplateColumns: "repeat(7, 78px)", width: "fit-content" }}
+              >
                 {dayNames.map((day) => (
-                  <div key={day} className="p-2 text-center text-xs font-semibold text-muted-foreground border-b border-border">
-                    {day}
+                  <div key={day} className="p-2 text-center text-[11px] font-semibold text-muted-foreground/80 border-b border-white/30 uppercase tracking-wide">
+                    {day.slice(0, 3)}
                   </div>
                 ))}
               </div>
 
               {/* Calendar Days */}
-              <div className="grid grid-cols-7">
+              <div
+                className="grid place-items-center justify-center mx-auto"
+                style={{ gridTemplateColumns: "repeat(7, 78px)", gridAutoRows: "78px", width: "fit-content" }}
+              >
                 {/* Empty cells for days before month starts */}
                 {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                  <div key={`empty-${i}`} className="aspect-square border-b border-r border-border bg-muted/20" />
+                  <div
+                    key={`empty-${i}`}
+                    className="border-b border-r border-white/20 bg-white/5"
+                  />
                 ))}
 
                 {/* Actual days */}
@@ -286,43 +307,44 @@ export function SkinJournalCalendar() {
                     <button
                       key={day}
                       onClick={() => openEntryForm(day)}
-                      className={`group relative aspect-square border-b border-r border-border p-2 hover:bg-muted/50 transition-colors cursor-pointer ${
-                        isToday ? 'bg-primary/5' : ''
-                      }`}>
-                      <div className="flex flex-col h-full">
+                      className={`group relative border-b border-r border-white/20 p-0.5 hover:bg-white/15 transition-colors cursor-pointer ${
+                        isToday ? 'bg-white/20 backdrop-blur-sm ring-1 ring-white/50' : 'bg-white/5'
+                      }`}
+                      style={{ width: 78, height: 78 }}>
+                      <div className="flex h-full flex-col">
                         {/* Day number */}
-                        <span className={`text-sm font-medium ${isToday ? 'text-primary font-semibold' : 'text-foreground'}`}>
+                        <span className={`text-[11px] font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>
                           {day}
                         </span>
 
                         {/* Entry indicators or hover plus */}
                         {entry ? (
-                          <div className="flex-1 flex flex-col gap-1 mt-2">
+                          <div className="mt-1 flex flex-1 flex-col gap-1.5">
                             {/* Severity bar */}
-                            <div className={`h-2 w-full rounded-sm ${getSeverityColor(entry.breakoutSeverity)}`} />
+                            <div className={`h-1.5 w-full rounded-full ${getSeverityColor(entry.breakoutSeverity)}`} />
 
                             {/* Event dots */}
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-1.5">
                               {entry.events.period && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-pink-500" title="Period" />
+                                <div className="h-1.5 w-1.5 rounded-full bg-pink-500/90" title="Period" />
                               )}
                               {entry.events.stress && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-red-500" title="Stress" />
+                                <div className="h-1.5 w-1.5 rounded-full bg-red-500/90" title="Stress" />
                               )}
                               {entry.events.newProduct && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500" title="New Product" />
+                                <div className="h-1.5 w-1.5 rounded-full bg-blue-500/90" title="New Product" />
                               )}
                               {entry.events.dietChange && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-orange-500" title="Diet Change" />
+                                <div className="h-1.5 w-1.5 rounded-full bg-orange-500/90" title="Diet Change" />
                               )}
                               {entry.events.exercise && (
-                                <div className="h-1.5 w-1.5 rounded-full bg-green-500" title="Exercise" />
+                                <div className="h-1.5 w-1.5 rounded-full bg-green-500/90" title="Exercise" />
                               )}
                             </div>
                           </div>
                         ) : (
-                          <div className="flex-1 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Plus className="h-4 w-4 text-muted-foreground" />
+                          <div className="flex flex-1 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                           </div>
                         )}
                       </div>

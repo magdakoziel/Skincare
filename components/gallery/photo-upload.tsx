@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type PhotoUploadProps = {
   onClose: () => void
-  onUpload: (photo: { url: string; caption: string; analyzeNow: boolean }) => void
+  onUpload: (photo: { url: string; caption: string; analyzeNow: boolean; takenAt?: string }) => void
 }
 
 type PhotoCapture = {
@@ -29,6 +29,7 @@ export function PhotoUpload({ onClose, onUpload }: PhotoUploadProps) {
   const [analyzeNow, setAnalyzeNow] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [isCameraMode, setIsCameraMode] = useState(false)
+  const [photoDate, setPhotoDate] = useState(() => new Date().toISOString().split("T")[0])
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
 
@@ -79,6 +80,34 @@ export function PhotoUpload({ onClose, onUpload }: PhotoUploadProps) {
     setIsCameraMode(false)
   }
 
+  const MAX_IMAGE_EDGE = 1280
+  const IMAGE_QUALITY = 0.82
+
+  const compressDataUrl = (dataUrl: string) => {
+    if (!dataUrl?.startsWith("data:image")) {
+      return Promise.resolve(dataUrl)
+    }
+    return new Promise<string>((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const maxEdge = Math.max(img.width, img.height)
+        const scale = maxEdge > MAX_IMAGE_EDGE ? MAX_IMAGE_EDGE / maxEdge : 1
+        const canvas = document.createElement("canvas")
+        canvas.width = Math.max(1, Math.round(img.width * scale))
+        canvas.height = Math.max(1, Math.round(img.height * scale))
+        const ctx = canvas.getContext("2d")
+        if (!ctx) {
+          resolve(dataUrl)
+          return
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL("image/jpeg", IMAGE_QUALITY))
+      }
+      img.onerror = () => resolve(dataUrl)
+      img.src = dataUrl
+    })
+  }
+
   const capturePhoto = () => {
     if (videoRef.current && photos.length < 3) {
       const canvas = document.createElement('canvas')
@@ -89,7 +118,7 @@ export function PhotoUpload({ onClose, onUpload }: PhotoUploadProps) {
         ctx.drawImage(videoRef.current, 0, 0)
         canvas.toBlob((blob) => {
           if (blob) {
-            const dataUrl = canvas.toDataURL('image/jpeg')
+            const dataUrl = canvas.toDataURL("image/jpeg", IMAGE_QUALITY)
             const file = new File([blob], `camera-${currentPerspective}.jpg`, { type: 'image/jpeg' })
             setPhotos([...photos, {
               preview: dataUrl,
@@ -114,10 +143,12 @@ export function PhotoUpload({ onClose, onUpload }: PhotoUploadProps) {
     try {
       // Upload all photos
       for (const photo of photos) {
-        onUpload({
-          url: photo.preview,
+        const optimizedPreview = await compressDataUrl(photo.preview)
+        await onUpload({
+          url: optimizedPreview,
           caption: `${caption ? caption + ' - ' : ''}${perspectives.find(p => p.value === photo.perspective)?.label}`,
           analyzeNow,
+          takenAt: photoDate,
         })
       }
       onClose()
@@ -150,6 +181,17 @@ export function PhotoUpload({ onClose, onUpload }: PhotoUploadProps) {
                 Add multiple angles (front, left profile, right profile) for comprehensive tracking.
               </p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="photo-date">Date taken</Label>
+            <Input
+              id="photo-date"
+              type="date"
+              value={photoDate}
+              max={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setPhotoDate(e.target.value)}
+            />
           </div>
 
           {/* Show captured photos */}

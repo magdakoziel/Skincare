@@ -3,11 +3,15 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { Card, CardContent } from "@/components/ui/card"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { PhotoAnalysisResult } from "@/components/gallery/photo-analysis-result"
+import type { PhotoAnalysisResult as AnalysisResult } from "@/lib/analyze-photo"
 import { Calendar } from "lucide-react"
 
 type Photo = {
+  id?: string
   _id?: string
   url: string
   caption?: string
@@ -18,6 +22,7 @@ type Photo = {
     severity: string
     affectedAreas: string[]
   }
+  analysisDetails?: AnalysisResult
 }
 
 type GridViewProps = {
@@ -26,6 +31,7 @@ type GridViewProps = {
 
 export function GridView({ photos }: GridViewProps) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null)
 
   if (photos.length === 0) {
     return (
@@ -45,7 +51,7 @@ export function GridView({ photos }: GridViewProps) {
 
           return (
             <Card
-              key={photo._id || index}
+              key={photo.id || photo._id || index}
               className="cursor-pointer overflow-hidden border-border transition-transform hover:scale-105"
               onClick={() => setSelectedPhoto(photo)}
             >
@@ -68,6 +74,9 @@ export function GridView({ photos }: GridViewProps) {
       {selectedPhoto && (
         <Dialog open onOpenChange={() => setSelectedPhoto(null)}>
           <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Photo details</DialogTitle>
+            </DialogHeader>
             <img
               src={selectedPhoto.url || "/placeholder.svg"}
               alt={selectedPhoto.caption || "Skin photo"}
@@ -94,10 +103,25 @@ export function GridView({ photos }: GridViewProps) {
                   )}
                 </div>
               )}
+              {selectedPhoto.analysisDetails && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setAnalysisResult(selectedPhoto.analysisDetails!)}
+                >
+                  View full AI analysis
+                </Button>
+              )}
             </div>
           </DialogContent>
         </Dialog>
       )}
+
+      <Dialog open={!!analysisResult} onOpenChange={(open) => !open && setAnalysisResult(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          {analysisResult && <PhotoAnalysisResult result={analysisResult} onClose={() => setAnalysisResult(null)} />}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

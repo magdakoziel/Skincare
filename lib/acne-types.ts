@@ -409,7 +409,7 @@ export const acneTypes: AcneType[] = [
     ],
   },
 
-{
+  {
     id: "pustules",
     name: "Pustules",
     medicalName: "Inflammatory Pustules",
@@ -444,6 +444,49 @@ export const acneTypes: AcneType[] = [
       "Picking or popping pustules",
       "Alcohol-heavy spot treatments (drying, irritant)",
       "Layering too many actives",
+    ],
+  },
+  {
+    id: "rosacea",
+    name: "Rosacea",
+    medicalName: "Chronic Inflammatory Dermatosis",
+    severity: "moderate",
+    description:
+      "Rosacea is a chronic inflammatory skin condition that causes flushing, persistent redness, and sometimes acne-like bumps. It commonly affects the central face (cheeks, nose, chin) and can flare from heat, alcohol, spicy food, or stress.",
+    howToIdentify: [
+      "Persistent facial redness or flushing that worsens with triggers",
+      "Visible blood vessels (telangiectasia) on the cheeks or nose",
+      "Small pus-filled bumps that look like acne but feel hot or tender",
+      "Burning, stinging, or tight sensation, especially after products",
+      "In some cases, dry irritated eyes or swelling around the nose",
+    ],
+    causes: [
+      "Genetic predisposition and fair skin phototypes",
+      "Overactive immune response and chronic inflammation",
+      "Demodex mites or microbial imbalance on the skin",
+      "Environmental triggers: heat, cold, sun, wind",
+      "Dietary triggers: spicy food, hot drinks, alcohol",
+      "Stress, hormonal shifts, or vigorous exercise",
+    ],
+    treatmentFocus: [
+      "Calm inflammation and reduce flushing episodes",
+      "Strengthen the skin barrier with soothing hydration",
+      "Avoid common trigger ingredients and lifestyle factors",
+      "Protect daily with broad-spectrum SPF to minimize flare ups",
+    ],
+    recommendedIngredients: [
+      "Azelaic acid (anti inflammatory, reduces redness)",
+      "Niacinamide (strengthens barrier, reduces blotchiness)",
+      "Centella asiatica or green tea extract (soothing botanicals)",
+      "Ceramides and hyaluronic acid for barrier repair",
+      "Prescription metronidazole or ivermectin (consult derm)",
+    ],
+    avoidIngredients: [
+      "High-concentration alcohol toners or astringents",
+      "Physical scrubs and rough cleansing brushes",
+      "Fragrance-heavy or mentholated products",
+      "Hot water, steam facials, or saunas that spike flushing",
+      "Spicy food, excess caffeine, or alcohol if they trigger you",
     ],
   },
 

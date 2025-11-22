@@ -14,6 +14,7 @@ import { AlertCircle, CheckCircle2, XCircle, Clock, Droplet, Lightbulb, Filter }
 export default function GlossaryPage() {
   const [activeTab, setActiveTab] = useState("concerns")
   const [selectedSkinType, setSelectedSkinType] = useState<SkinType | "all">("all")
+  const [selectedPurpose, setSelectedPurpose] = useState<string>("all")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const skinTypes: Array<{ value: SkinType | "all"; label: string }> = [
@@ -25,10 +26,70 @@ export default function GlossaryPage() {
     { value: "normal", label: "Normal" }
   ]
 
+  const purposes = [
+    { value: "all", label: "All" },
+    { value: "anti-aging", label: "Anti-Aging" },
+    { value: "hydration", label: "Hydration" },
+    { value: "brightening", label: "Brightening" },
+    { value: "anti-inflammatory", label: "Anti-Inflammatory" },
+    { value: "acne", label: "Acne Treatment" },
+    { value: "exfoliation", label: "Exfoliation" }
+  ]
+
   const filteredIngredients = useMemo(() => {
-    if (selectedSkinType === "all") return activeIngredients
-    return activeIngredients.filter(ing => ing.suitableForSkinTypes.includes(selectedSkinType))
-  }, [selectedSkinType])
+    let filtered = activeIngredients
+
+    // Filter by skin type
+    if (selectedSkinType !== "all") {
+      filtered = filtered.filter(ing => ing.suitableForSkinTypes.includes(selectedSkinType))
+    }
+
+    // Filter by purpose
+    if (selectedPurpose !== "all") {
+      filtered = filtered.filter(ing => {
+        const benefitsText = ing.benefits.join(" ").toLowerCase()
+        const categoryText = ing.category.toLowerCase()
+
+        switch (selectedPurpose) {
+          case "anti-aging":
+            return benefitsText.includes("aging") ||
+                   benefitsText.includes("wrinkle") ||
+                   benefitsText.includes("collagen") ||
+                   benefitsText.includes("fine line")
+          case "hydration":
+            return benefitsText.includes("hydrat") ||
+                   benefitsText.includes("moisture") ||
+                   categoryText.includes("humectant") ||
+                   categoryText.includes("moisturizer")
+          case "brightening":
+            return benefitsText.includes("brighten") ||
+                   benefitsText.includes("dark spot") ||
+                   benefitsText.includes("hyperpigmentation") ||
+                   benefitsText.includes("melasma") ||
+                   categoryText.includes("brightening")
+          case "anti-inflammatory":
+            return benefitsText.includes("inflammat") ||
+                   benefitsText.includes("sooth") ||
+                   benefitsText.includes("redness") ||
+                   benefitsText.includes("calm")
+          case "acne":
+            return benefitsText.includes("acne") ||
+                   benefitsText.includes("breakout") ||
+                   benefitsText.includes("pore") ||
+                   categoryText.includes("antibacterial")
+          case "exfoliation":
+            return benefitsText.includes("exfoliat") ||
+                   categoryText.includes("aha") ||
+                   categoryText.includes("bha") ||
+                   categoryText.includes("acid")
+          default:
+            return true
+        }
+      })
+    }
+
+    return filtered
+  }, [selectedSkinType, selectedPurpose])
 
   return (
     <div className="min-h-screen relative overflow-hidden"
@@ -167,10 +228,10 @@ export default function GlossaryPage() {
 
         {/* Active Ingredients Tab */}
         <TabsContent value="ingredients" className="space-y-6">
-          {/* Skin Type Filter - Collapsible */}
+          {/* Filters - Collapsible */}
           <Card className="border-border bg-muted/30">
             <CardContent className="p-4 md:p-6">
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Filter Icon/Header - Click to toggle */}
                 <button
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -184,38 +245,72 @@ export default function GlossaryPage() {
 
                 {/* Filter Options - Show when open */}
                 {isFilterOpen && (
-                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {/* All ingredients text with count */}
                     <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                      <span>{selectedSkinType === "all" ? "All ingredients" : `For skin type: ${skinTypes.find(t => t.value === selectedSkinType)?.label}`}</span>
+                      <span>
+                        {selectedSkinType === "all" && selectedPurpose === "all"
+                          ? `All ingredients (${filteredIngredients.length})`
+                          : `Showing ${filteredIngredients.length} ingredient${filteredIngredients.length !== 1 ? 's' : ''}`
+                        }
+                      </span>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {skinTypes.slice(1).map((type) => (
-                        <Button
-                          key={type.value}
-                          size="sm"
-                          variant={selectedSkinType === type.value ? "default" : "outline"}
-                          onClick={() => setSelectedSkinType(type.value)}
-                          className="text-xs md:text-sm rounded-xl"
-                        >
-                          {type.label}
-                        </Button>
-                      ))}
-                      {selectedSkinType !== "all" && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => setSelectedSkinType("all")}
-                          className="text-xs md:text-sm rounded-xl"
-                        >
-                          Clear
-                        </Button>
-                      )}
+
+                    {/* Skin Types Filter */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs md:text-sm font-semibold text-foreground">Skin Types</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {skinTypes.slice(1).map((type) => (
+                          <Button
+                            key={type.value}
+                            size="sm"
+                            variant={selectedSkinType === type.value ? "default" : "outline"}
+                            onClick={() => setSelectedSkinType(type.value)}
+                            className="text-xs md:text-sm rounded-xl"
+                          >
+                            {type.label}
+                          </Button>
+                        ))}
+                        {selectedSkinType !== "all" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedSkinType("all")}
+                            className="text-xs md:text-sm rounded-xl"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                    {selectedSkinType !== "all" && (
-                      <p className="text-xs md:text-sm text-muted-foreground">
-                        Showing {filteredIngredients.length} ingredient{filteredIngredients.length !== 1 ? 's' : ''}
-                      </p>
-                    )}
+
+                    {/* Purpose Filter */}
+                    <div className="space-y-2">
+                      <h4 className="text-xs md:text-sm font-semibold text-foreground">Purpose</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {purposes.slice(1).map((purpose) => (
+                          <Button
+                            key={purpose.value}
+                            size="sm"
+                            variant={selectedPurpose === purpose.value ? "default" : "outline"}
+                            onClick={() => setSelectedPurpose(purpose.value)}
+                            className="text-xs md:text-sm rounded-xl"
+                          >
+                            {purpose.label}
+                          </Button>
+                        ))}
+                        {selectedPurpose !== "all" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedPurpose("all")}
+                            className="text-xs md:text-sm rounded-xl"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
