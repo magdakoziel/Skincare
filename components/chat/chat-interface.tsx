@@ -316,7 +316,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="container mx-auto flex max-w-4xl flex-col px-4 py-4 md:py-8">
+    <div className="container mx-auto flex max-w-4xl flex-col px-4 py-4 md:py-8 pb-20 md:pb-8">
       <Card className="flex flex-col border-border/40 bg-background/60 backdrop-blur-md shadow-xl h-[calc(100vh-10rem)] md:h-[calc(100vh-8rem)]">
         <CardHeader className="flex-shrink-0 border-b border-border/40 py-3 md:py-6 bg-gradient-to-r from-purple-50/60 via-pink-50/50 to-rose-50/60 dark:from-purple-950/30 dark:via-pink-950/20 dark:to-rose-950/25 backdrop-blur-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
